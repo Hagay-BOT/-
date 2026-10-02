@@ -141,7 +141,7 @@ details.fold>summary::after{content:'+';font-size:1.3rem;color:var(--muted)}
 details.fold[open]>summary::after{content:'−'}
 details.fold>.in{padding:0 16px 16px;display:flex;flex-direction:column;gap:10px}
 .kmgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-input[type=number],select{font:inherit;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+input[type=number],select{font:inherit;min-height:44px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
 .toggle{display:flex;align-items:center;gap:10px;justify-content:space-between}
 .toast{position:fixed;bottom:calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 12px);left:16px;right:16px;margin:auto;max-width:420px;background:var(--fg);color:var(--bg);padding:12px 16px;border-radius:12px;font:500 .95rem var(--display);z-index:40;text-align:center}
 @media (prefers-reduced-motion:reduce){.prog i{transition:none}}
@@ -155,7 +155,7 @@ main,.screen,.card{min-width:0}
 /* ===== simplified UI ===== */
 .fig3d{width:100%;height:100%;display:block;touch-action:pan-y;cursor:grab}
 .figbox{background:var(--stage)}
-.banner{display:block;width:100%;text-align:start;border:0;border-radius:12px;padding:10px 14px;background:var(--danger-bg);color:var(--danger);font:500 .95rem var(--display);cursor:pointer}
+.banner{display:block;width:100%;min-height:44px;text-align:start;border:0;border-radius:12px;padding:10px 14px;background:var(--danger-bg);color:var(--danger);font:500 .95rem var(--display);cursor:pointer}
 .banner u{margin-inline-start:6px}
 .hero h2{font-size:1.35rem}
 .herobtns{display:grid;grid-template-columns:2fr 1fr;gap:10px}
@@ -182,7 +182,7 @@ main,.screen,.card{min-width:0}
 .stage .cap{min-height:1.5em}
 .stage-ctrl{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:center}
 .seg-ctl{display:inline-flex;background:var(--surface2);border-radius:12px;padding:3px}
-.seg-ctl button{border:0;background:none;min-height:38px;padding:4px 14px;border-radius:9px;font:500 .9rem var(--display);cursor:pointer}
+.seg-ctl button{border:0;background:none;min-height:44px;padding:4px 14px;border-radius:9px;font:500 .9rem var(--display);cursor:pointer}
 .seg-ctl button[aria-pressed=true]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12)}
 .hint{display:inline-flex;align-items:center;gap:4px;font-size:.8rem;color:var(--muted)}
 .hint svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
@@ -221,7 +221,13 @@ ul.tight{gap:2px}
 .stopline{font-size:.82rem;color:var(--danger);margin:0}
 .watch.small .stopline{display:inline-block;margin-top:2px}
 .qrow{display:flex;flex-direction:column;gap:2px}
-details.why summary{cursor:pointer;font-size:.82rem;color:var(--accent);padding:2px 14px;list-style:none}
+details.why summary{cursor:pointer;font-size:.82rem;color:var(--accent);padding:2px 14px;list-style:none;min-height:44px;display:flex;align-items:center}
 details.why summary::-webkit-details-marker{display:none}
 details.why p{font-size:.88rem;color:var(--muted);padding:0 14px 6px}
 @media (orientation:landscape) and (max-height:500px){.stage .figbox{max-height:58vh;width:auto;margin-inline:auto}}
+
+.src li a{display:inline-block;padding:6px 0;min-height:44px;box-sizing:border-box}
+.ask{position:fixed;inset:0;z-index:31;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.45)}
+.ask-box{background:var(--surface);color:var(--fg);border-radius:16px;padding:18px;max-width:360px;width:100%;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.25)}
+.ask-box p{margin:0 0 14px;font:500 1.05rem var(--display)}
+.ask-box .row{gap:10px;flex-wrap:wrap}

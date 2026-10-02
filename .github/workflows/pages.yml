@@ -27,6 +27,11 @@ jobs:
           cp -r app back-practice _site/
           cp index.html _site/
           touch _site/.nojekyll
+      - name: Stamp service worker version
+        # every deploy changes sw.js, so installed apps always pick up new files even if VERSION was not bumped
+        run: |
+          sed -i "s/^const VERSION = '\([^']*\)';/const VERSION = '\1-${GITHUB_SHA::7}';/" _site/app/sw.js
+          grep -q "^const VERSION = '.*-${GITHUB_SHA::7}';" _site/app/sw.js
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

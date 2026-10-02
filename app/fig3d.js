@@ -16,12 +16,19 @@
   function css(name, fallback) { try { const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fallback; } catch (e) { return fallback; } }
 
   /* ---------- shared renderer + scene ---------- */
-  let towel, R = null, scene, cam, matBody, matFar, matJoint, matHl, matBand, floorMat, matMat, parts = {}, glows = [], bands = [], wall, mat, sun, failed = false;
+  let towel, R = null, scene, cam, matBody, matFar, matJoint, matHl, matBand, floorMat, matMat, parts = {}, glows = [], bands = [], wall, mat, sun, failed = false, lost = false;
   function init() {
     if (R || failed) return !!R;
     try {
+      // probe first, so a device without WebGL falls back to 2D without three.js logging errors
       const cv = document.createElement('canvas');
-      R = new T.WebGLRenderer({ canvas: cv, antialias: true, alpha: true, preserveDrawingBuffer: false, powerPreference: 'low-power' });
+      const attrs = { antialias: true, alpha: true, preserveDrawingBuffer: false, powerPreference: 'low-power' };
+      const gl = cv.getContext('webgl2', attrs) || cv.getContext('webgl', attrs);
+      if (!gl) { failed = true; return false; }
+      R = new T.WebGLRenderer(Object.assign({ canvas: cv, context: gl }, attrs));
+      // the browser may drop the context (e.g. app in background): keep the last frames on screen until it is restored
+      cv.addEventListener('webglcontextlost', e => { e.preventDefault(); lost = true; });
+      cv.addEventListener('webglcontextrestored', () => { lost = false; });
     } catch (e) { failed = true; return false; }
     R.shadowMap.enabled = true; R.shadowMap.type = T.PCFSoftShadowMap;
     R.outputColorSpace = T.SRGBColorSpace;
@@ -296,6 +303,7 @@
     render(J) {
       if (!init()) return;
       J = J || this.lastJ; if (!J) return; this.lastJ = J;
+      if (lost || R.getContext().isContextLost()) return;
       const [w, h] = this.size();
       if (R.domElement.width !== w || R.domElement.height !== h) R.setSize(w, h, false);
       mat.visible = this.c.mat !== undefined ? this.c.mat : this.m.mat !== false;

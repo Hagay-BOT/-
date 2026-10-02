@@ -126,7 +126,7 @@
           <button class="btn big-btn" data-start="home">${ICON.play}<span>אימון חיזוק<small>כ-${mins} דק׳</small></span></button>
           <button class="btn big-btn alt" data-start="stretch">${ICON.play}<span>מתיחות<small>כ-${smin} דק׳</small></span></button>
         </div>
-        <p class="sub">${week} מתוך 3 אימוני חיזוק השבוע</p>
+        <p class="sub">${week > 3 ? `${week} אימוני חיזוק בשבעת הימים האחרונים, יותר מהיעד של 3. כדאי להשאיר יום מנוחה בין אימונים.` : `${week} מתוך 3 אימוני חיזוק השבוע`}</p>
       </div>
       <div class="card"><div class="days days7">${weekStrip(log)}</div>
         <div class="checks">${[['home', 'חיזוק'], ['stretch', 'מתיחות'], ['t_am', 'שביל בוקר'], ['t_pm', 'שביל ערב']].map(([k, l]) => `<label class="pill-check"><input type="checkbox" data-log="${k}" ${t[k] ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div>
@@ -163,9 +163,10 @@
         ${r.noGuided ? '' : `<button class="btn" data-start="${r.id}">${ICON.play}התחל · כ-${estimateMin(sessionFor(r.id).items)} דק׳</button>`}</div>`).join('')}
       ${fold({ title: 'פרטים מלאים: מתי לעצור', body: `<ul class="clean">${T.stop.items.map(i => `<li>${i}</li>`).join('')}</ul>`, sources: T.stop.sources })}
       ${T.sections.map(s => fold(s)).join('')}
+      <p class="sub">${C.sourceNote}</p>
       <details class="fold"><summary><span>מחשבון עלייה הדרגתית</span></summary><div class="in">
         <p>${T.calc.intro}</p>
-        <label class="toggle"><span>ק"מ ביום, שבוע 1</span><input type="number" id="km0" min="1" max="40" value="${store.get('km0', 0) || ''}" placeholder="—" inputmode="decimal" style="width:90px"></label>
+        <label class="toggle"><span>ק"מ ביום, שבוע 1</span><input type="number" id="km0" min="1" max="40" value="${(() => { const k = +store.get('km0', 0); return k > 0 && k <= 40 ? k : ''; })()}" placeholder="—" inputmode="decimal" style="width:90px"></label>
         <label class="toggle"><span>עלייה שבועית</span><select id="kmPct">${[5, 10].map(v => `<option value="${v}" ${v === store.get('kmPct', 5) ? 'selected' : ''}>${v}%</option>`).join('')}</select></label>
         <div class="kmgrid" id="kmgrid"></div>
         <div class="warn">${T.calc.caveat}</div>${srcList(T.calc.sources)}
@@ -191,6 +192,7 @@
       <div class="card"><h2>לשאול את הרופא</h2>
         <div class="checks col">${H.doctor.map(q => `<div class="qrow"><label class="check"><input type="checkbox" data-q="${q.id}" ${done[q.id] ? 'checked' : ''}><span>${esc(q.q || q.text)}</span></label>${q.q ? `<details class="why"><summary>למה?</summary><p>${q.text}</p></details>` : ''}</div>`).join('')}</div></div>
       <h2 class="group-title">להבין יותר</h2>
+      <p class="sub">${C.sourceNote}</p>
       ${fold({ title: 'סימני חירום: פרטים ומקורות', body: `<ul class="clean">${H.er.items.map(i => `<li>${i}</li>`).join('')}</ul><p>${H.er.note}</p>`, sources: H.er.sources.concat(H.soon.sources) })}
       ${H.sections.map((s, i) => fold(Object.assign({ id: i === 0 ? 'hf-main' : undefined }, s))).join('')}
       <div class="note"><b>מה חסר בתוכנית:</b> ${esc(C.gap)}</div>
@@ -209,7 +211,7 @@
           <div class="seg-ctl" role="group" aria-label="מהירות">${[[0.5, 'איטי'], [1, 'רגיל']].map(([v, l]) => `<button data-sp="${v}" aria-pressed="${v === 1}">${l}</button>`).join('')}</div>
           ${use3D ? `<span class="hint">${ICON.rotate} גרור לסיבוב</span>` : ''}</div></div>
       <ol class="steps3">${x.s3.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
-      <div class="watch"><b>שים לב:</b> ${esc(x.watch)}</div>
+      <div class="watch"><b>שימו לב:</b> ${esc(x.watch)}</div>
       <p class="stopline">${esc(C.stopLine)}</p>
       <button class="btn wide" data-one="${id}">${ICON.play}תרגל עכשיו עם טיימר</button>
       <details class="fold"><summary><span>הסבר מלא ומקורות</span></summary><div class="in">
@@ -313,7 +315,7 @@
 
   let S = null;
   function startSession(sess) {
-    if (S) endSession(true);
+    if (S) return;
     const pl = document.createElement('div'); pl.className = 'player'; pl.setAttribute('role', 'dialog'); pl.setAttribute('aria-label', 'אימון מודרך');
     const opener = document.activeElement;
     document.body.appendChild(pl);
@@ -321,28 +323,59 @@
     history.pushState({ player: 1 }, '');
     S = { sess, steps: buildSteps(sess.items), i: 0, pl, timer: null, adv: null, skipped: new Set(), fig: null, figId: null, logKey: sess.logKey, day: dayKey(), startKey: sess.startKey };
     keepAwake(true); unlockAudio();
+    const rs = store.get('resume', null);
+    const at = rs && rs.key === sess.startKey && rs.day === S.day && rs.ei > 0 ? S.steps.findIndex(s => s.ei === rs.ei) : -1;
     renderStep(true);
+    if (at > 0) {
+      const nm = C.ex[(S.sess.items[rs.ei] || {}).id];
+      ask(`להמשיך מהתרגיל שבו עצרת${nm ? ` (${nm.name})` : ''}?`, 'ממשיכים', 'מההתחלה', () => { S.i = at; renderStep(true); }, () => store.set('resume', null));
+    }
+  }
+  // in-player question with two answers (a browser dialog would block the timers and speech)
+  function ask(text, yes, no, onYes, onNo) {
+    const old = $('.ask', S.pl); if (old) old.remove();
+    const d = document.createElement('div'); d.className = 'ask'; d.setAttribute('role', 'alertdialog'); d.setAttribute('aria-label', text);
+    d.innerHTML = `<div class="ask-box"><p>${esc(text)}</p><div class="row center"><button class="btn ghost" data-no>${esc(no)}</button><button class="btn" data-yes>${esc(yes)}</button></div></div>`;
+    S.pl.appendChild(d);
+    $('[data-yes]', d).onclick = () => { d.remove(); onYes(); };
+    $('[data-no]', d).onclick = () => { d.remove(); if (onNo) onNo(); };
+    $('[data-no]', d).focus();
+  }
+  function askLeave() {
+    const wasPaused = S.paused; if (S.cd && !S.paused) { S.paused = true; clearInterval(S.timer); }
+    ask('לצאת מהאימון? אפשר להמשיך מאותו תרגיל בפעם הבאה היום.', 'יוצאים', 'ממשיכים באימון',
+      () => { S.leaving = true; goBack(); },
+      () => { if (S.cd && !wasPaused) { S.paused = false; const c = S.cd; countdown(c.left, c.onTick, c.onEnd, c.total); } });
   }
   function endSession(silent) {
     if (!S) return;
+    // remember the exercise it stopped at, to offer resuming later the same day
+    if (S.startKey) { const st = S.steps[S.i]; if (st.kind !== 'done' && S.i > 0) store.set('resume', { key: S.startKey, day: S.day, ei: st.ei }); else store.set('resume', null); }
     const logged = S.logged, startKey = S.startKey;
     clearInterval(S.timer); clearTimeout(S.adv); stopFigs(S.pl); S.pl.remove(); closeLayer(S.pl); S = null; keepAwake(false);
     try { speechSynthesis.cancel(); } catch (e) { }
     // refresh the screen underneath only when nothing else is open and the log changed
     if (!silent && !layers.length && logged) { const y = window.scrollY; render(); window.scrollTo(0, y); const b = startKey && $(`[data-start="${startKey}"]`); if (b) b.focus(); }
   }
-  function countdown(secs, onTick, onEnd) {
+  // total: the full length when resuming a paused countdown, so the ring keeps its progress
+  function countdown(secs, onTick, onEnd, total) {
+    total = total || secs;
     clearInterval(S.timer); const t0 = Date.now(); let last = secs;
-    onTick(secs, 0);
+    S.cd = { left: secs, onTick, onEnd, total };
+    onTick(secs, 1 - secs / total);
     S.timer = setInterval(() => {
       const left = secs - Math.floor((Date.now() - t0) / 1000);
-      if (left <= 0) { clearInterval(S.timer); onTick(0, 1); onEnd(); return; }
+      if (left <= 0) { clearInterval(S.timer); S.cd = null; onTick(0, 1); onEnd(); return; }
       if (left !== last) { if (left <= 3) beep(520, .07); last = left; }
-      onTick(left, 1 - left / secs);
+      S.cd.left = left;
+      onTick(left, 1 - left / total);
     }, 200);
   }
-  function go(delta) {
-    if (!S) return; clearInterval(S.timer); clearTimeout(S.adv);
+  // auto: called by a timer. A tap within 450ms of the last step change is ignored (the new button sits where the old one was)
+  function go(delta, auto) {
+    if (!S) return;
+    const now = Date.now(); if (!auto && now - (S.lastGo || 0) < 450) return; S.lastGo = now;
+    clearInterval(S.timer); clearTimeout(S.adv);
     S.i = Math.max(0, Math.min(S.steps.length - 1, S.i + delta));
     if (delta < 0) { const st = S.steps[S.i]; if (st.id && st.kind !== 'next') S.skipped.delete(st.id); }
     renderStep();
@@ -350,17 +383,17 @@
   function skipExercise() { if (!S) return; clearTimeout(S.adv); const ei = S.steps[S.i].ei; S.skipped.add(S.sess.items[ei].id); let j = S.i; while (j < S.steps.length - 1 && S.steps[j].ei === ei && S.steps[j].kind !== 'next') j++; clearInterval(S.timer); S.i = j; renderStep(); }
 
   function renderStep(first) {
-    clearTimeout(S.adv);
+    clearTimeout(S.adv); S.paused = false; S.cd = null;
     const st = S.steps[S.i]; const pl = S.pl;
     const total = S.sess.items.length;
     if (st.kind === 'done') {
       clearInterval(S.timer); stopFigs(pl); S.figId = null;
       const done = total - S.skipped.size;
       pl.innerHTML = `<div class="row"><button class="iconbtn" data-x aria-label="סגירה">${ICON.close}</button></div>
-        <div class="done-screen"><div class="done-mark">✓</div><h1>סיימת</h1><p>${done} מתוך ${total} תרגילים</p>
-        ${S.skipped.size ? `<p class="sub">דילגת על ${S.skipped.size}. אם משהו כאב, ספר לפיזיותרפיסט.</p>` : ''}
+        <div class="done-screen">${done > 0 ? `<div class="done-mark">✓</div><h1>סיימת</h1>` : `<h1>לא בוצע אף תרגיל</h1>`}<p>${done} מתוך ${total} תרגילים</p>
+        ${done === 0 ? `<p class="sub">אם דילגת בגלל כאב, כדאי להתייעץ עם רופא או פיזיותרפיסט לפני האימון הבא.</p>` : S.skipped.size ? `<p class="sub">דילגת על ${S.skipped.size}. אם משהו כאב, כדאי לספר לרופא או לפיזיותרפיסט.</p>` : ''}
         ${S.logKey && done > 0 ? `<button class="btn wide" data-save>שמור ביומן</button>` : ''}<button class="btn ghost wide" data-x>סגירה</button></div>`;
-      speak('סיימת. כל הכבוד');
+      speak(done > 0 ? 'סיימת. כל הכבוד' : 'האימון הסתיים');
       $$('[data-x]', pl).forEach(b => b.onclick = goBack);
       const sv = $('[data-save]', pl); if (sv) { sv.onclick = () => { logMark(S.logKey, true, S.day); S.logged = true; sv.textContent = 'נשמר ✓'; sv.disabled = true; }; sv.focus(); }
       return;
@@ -376,7 +409,7 @@
         <div class="pbody"><div class="row"><h2 class="grow">${esc(nx.name)}</h2><span class="chip">${esc(st.doseText || nx.doseText)}</span></div>
         <ol class="steps3 small">${nx.s3.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
         <button class="btn wide" data-ok>מוכן</button>
-        <div class="row between"><button class="btn ghost small" data-prev>הקודם</button><button class="btn ghost small" data-skipn>דלג</button></div></div>`;
+        <div class="row between"><button class="btn ghost small" data-prev>הקודם</button><button class="btn ghost small" data-skipn>מדלגים</button></div></div>`;
       const f = mountFig($('.pfig .figbox', pl), nx.move); if (!reduced) f.play(); else f.showKey(1);
       speak('הבא בתור: ' + nx.name);
       $$('[data-x]', pl).forEach(b => b.onclick = goBack);
@@ -398,7 +431,7 @@
     const dots = st.sets > 1 ? `<div class="dots" aria-label="סט ${st.set} מתוך ${st.sets}">${Array.from({ length: st.sets }, (_, k) => `<span class="${k < st.set - 1 ? 'on' : k === st.set - 1 ? 'now' : ''}"></span>`).join('')}</div>` : '';
     const head = `<div class="row"><h2 class="grow">${esc(x.name)}</h2>${dots}</div>`;
     const tag = [st.label, st.side].filter(Boolean).join(' · ');
-    const nav = `<div class="row between"><button class="btn ghost small" data-prev ${S.i === 0 ? 'disabled' : ''}>הקודם</button><button class="btn ghost small" data-skip>כואב? דלג</button></div>`;
+    const nav = `<div class="row between"><button class="btn ghost small" data-prev ${S.i === 0 ? 'disabled' : ''}>הקודם</button><button class="btn ghost small" data-skip>כואב? מדלגים</button></div>`;
     const watch = `<p class="watch small">${esc(x.watch)}<br><span class="stopline">${esc(C.stopLine)}</span></p>`;
     const bind = () => { const p = $('[data-prev]', body); if (p) p.onclick = () => go(-1); const s = $('[data-skip]', body); if (s) s.onclick = skipExercise; };
 
@@ -421,19 +454,23 @@
       const tick = (l, p) => { tv.textContent = l; ring.style.setProperty('--p', p); };
       $('[data-go]', body).onclick = e => {
         const btn = e.currentTarget; unlockAudio();
-        btn.textContent = 'עצור'; btn.disabled = true; setTimeout(() => { btn.disabled = false; }, 600);
-        btn.onclick = () => { clearInterval(S.timer); clearTimeout(S.adv); renderStep(); };
+        btn.textContent = 'השהיה'; btn.disabled = true; setTimeout(() => { btn.disabled = false; }, 600);
+        btn.onclick = () => {
+          if (!S.cd) return;
+          if (S.paused) { S.paused = false; btn.textContent = 'השהיה'; const c = S.cd; countdown(c.left, c.onTick, c.onEnd, c.total); }
+          else { S.paused = true; clearInterval(S.timer); btn.innerHTML = `${ICON.play}ממשיכים`; speak('השהיה'); }
+        };
         let rep = 1;
         const holdPhase = () => {
           fig.showKey(st.holdKey); ring.classList.add('hold'); ring.classList.remove('relax');
           ph.textContent = (isRep ? `מחזיקים · ${rep}/${st.reps}` : 'מחזיקים') + (tag ? ' · ' + tag : ''); rs.textContent = 'מחזיקים';
-          beep(880, .12); speak(isRep && rep > 1 ? String(rep) : 'החזק');
+          beep(880, .12); speak(isRep && rep > 1 ? String(rep) : 'מחזיקים');
           countdown(st.hold, tick, () => {
             beep(660, .2, 2);
             if (isRep && rep < st.reps) {
-              fig.showKey(st.readyKey); ring.classList.remove('hold'); ring.classList.add('relax'); ph.textContent = `משחררים · ${rep}/${st.reps}`; rs.textContent = 'משחררים'; speak('שחרר');
+              fig.showKey(st.readyKey); ring.classList.remove('hold'); ring.classList.add('relax'); ph.textContent = `משחררים · ${rep}/${st.reps}`; rs.textContent = 'משחררים'; speak('משחררים');
               countdown(st.relax, tick, () => { rep++; holdPhase(); });
-            } else { fig.showKey(st.readyKey); ring.classList.remove('hold'); speak('יופי'); S.adv = setTimeout(() => S && S.steps[S.i] === st && go(1), 900); }
+            } else { fig.showKey(st.readyKey); ring.classList.remove('hold'); speak('יופי'); S.adv = setTimeout(() => S && S.steps[S.i] === st && go(1, true), 900); }
           });
         };
         ph.textContent = 'מתכוננים…'; rs.textContent = 'מוכנים'; fig.showKey(st.readyKey);
@@ -447,7 +484,7 @@
         <div class="row center"><button class="btn ghost" data-plus>+15</button><button class="btn" data-ok>המשך</button></div>${nav}`;
       bind(); speak(label + (st.next ? '. ' + st.next : ''));
       let secs = st.secs; const ring = $('.ring', body), tv = $('#tv', body);
-      const run = () => countdown(secs, (l, p) => { tv.textContent = l; ring.style.setProperty('--p', p); }, () => { beep(880, .2, 2); go(1); });
+      const run = () => countdown(secs, (l, p) => { tv.textContent = l; ring.style.setProperty('--p', p); }, () => { beep(880, .2, 2); go(1, true); });
       run();
       $('[data-ok]', body).onclick = () => go(1);
       $('[data-plus]', body).onclick = () => { secs = (parseInt(tv.textContent, 10) || 0) + 15; run(); };
@@ -482,7 +519,10 @@
   if (history.state && (history.state.player || history.state.sheet)) history.replaceState(null, '');
   window.addEventListener('popstate', () => {
     backPending = false;
-    if (S) { endSession(); return; }
+    if (S) {
+      if (!S.leaving && S.steps[S.i].kind !== 'done' && S.i > 0) { history.pushState({ player: 1 }, ''); askLeave(); return; }
+      endSession(); return;
+    }
     const sh = $$('.sheet').pop(); if (sh) sh._close();
   });
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && S) keepAwake(true); });
