@@ -64,7 +64,7 @@
     const checks = [['home', 'אימון חיזוק בבית'], ['stretch', 'מתיחות'], ['t_am', 'שביל: שגרת בוקר'], ['t_pm', 'שביל: שגרת ערב']];
     el.innerHTML = `
       <div class="card hero">
-        <span class="lbl" style="color:inherit;opacity:.8">אימון חיזוק בבית · כ-20 דקות</span>
+        <span class="lbl" style="color:inherit;opacity:.8">אימון חיזוק בבית · כ-${estimateMin(sessionFor('home').items)} דקות (עם מנוחה של ${settings.rest} שנ׳)</span>
         <h2>${esc(suggest)}</h2>
         <p class="sub">${week} אימוני חיזוק ב-7 הימים האחרונים. היעד: ${esc(C.plan.freqShort)}.</p>
         <div class="row"><button class="btn" data-start="home">התחל אימון מודרך</button><button class="btn ghost small" data-start="stretch" style="background:rgba(255,255,255,.18);color:inherit">מתיחות בלבד</button></div>
@@ -101,18 +101,19 @@
       ${T.routines.map(r => `<div class="card"><div class="row"><h2 class="grow">${esc(r.title)}</h2><span class="chip">${esc(r.time)}</span></div>
         <ul class="clean">${r.items.map(i => `<li>${esc(C.ex[i.id] ? C.ex[i.id].name : i.label)} · <span class="sub">${esc(i.doseText)}</span></li>`).join('')}</ul>
         ${r.note ? `<p class="sub">${r.note}</p>` : ''}
-        ${r.items.some(i => C.ex[i.id]) ? `<button class="btn" data-start="${r.id}">התחל שגרה מודרכת</button>` : ''}</div>`).join('')}
+        ${r.noGuided ? '' : `<button class="btn" data-start="${r.id}">התחל שגרה מודרכת · כ-${estimateMin(sessionFor(r.id).items)} דק׳</button>`}</div>`).join('')}
       ${T.sections.map(s => fold(s)).join('')}
       <details class="fold"><summary>מחשבון עלייה הדרגתית</summary><div class="in">
         <p>${T.calc.intro}</p>
-        <label class="toggle"><span>מרחק יומי בשבוע הראשון (ק"מ)</span><input type="number" id="km0" min="1" max="40" value="${store.get('km0', 8)}" inputmode="decimal" style="width:90px"></label>
-        <label class="toggle"><span>עלייה שבועית</span><select id="kmPct">${[5, 10].map(v => `<option value="${v}" ${v === store.get('kmPct', 10) ? 'selected' : ''}>${v}%</option>`).join('')}</select></label>
+        <label class="toggle"><span>מרחק יומי בשבוע הראשון (ק"מ)</span><input type="number" id="km0" min="1" max="40" value="${store.get('km0', '')}" placeholder="ק&quot;מ" inputmode="decimal" style="width:90px"></label>
+        <label class="toggle"><span>עלייה שבועית</span><select id="kmPct">${[5, 10].map(v => `<option value="${v}" ${v === store.get('kmPct', 5) ? 'selected' : ''}>${v}%</option>`).join('')}</select></label>
         <div class="kmgrid" id="kmgrid"></div>
         <div class="warn">${T.calc.caveat}</div>${srcList(T.calc.sources)}
       </div></details>`;
     const calc = () => {
-      const s = Math.max(1, Math.min(40, parseFloat($('#km0', el).value) || 1)); const pct = +$('#kmPct', el).value;
-      store.set('km0', s); store.set('kmPct', pct);
+      const v = parseFloat($('#km0', el).value); const pct = +$('#kmPct', el).value; store.set('kmPct', pct);
+      if (!(v > 0)) { store.set('km0', ''); $('#kmgrid', el).innerHTML = '<p class="sub" style="grid-column:1/-1">מזינים מרחק התחלה כדי לראות את הטבלה.</p>'; return; }
+      const s = Math.min(40, v); store.set('km0', s);
       let h = ''; for (let w = 0; w < 12; w++) { const km = s * Math.pow(1 + pct / 100, w); h += `<div class="day">שבוע ${w + 1}<b>${km.toFixed(1)}</b></div>`; }
       $('#kmgrid', el).innerHTML = h;
     };
@@ -120,16 +121,18 @@
   };
 
   function fold(s, open) {
-    return `<details class="fold" ${open ? 'open' : ''}><summary>${esc(s.title)}${s.evidence ? ` <span class="evid ${s.evidence === 'low' ? 'low' : ''}">${s.evidence === 'low' ? 'ראיות חלשות' : 'מבוסס הנחיות'}</span>` : ''}</summary><div class="in">${s.body}${srcList(s.sources)}</div></details>`;
+    return `<details class="fold" ${open ? 'open' : ''}><summary>${esc(s.title)}${s.evidence ? ` <span class="evid ${s.evidence === 'guide' ? '' : 'low'}">${{ low: 'ראיות חלשות', obs: 'מחקרי תצפית ודעת מומחים', guide: 'מבוסס הנחיות' }[s.evidence]}</span>` : ''}</summary><div class="in">${s.body}${srcList(s.sources)}</div></details>`;
   }
 
   screens.health = function (el) {
     const H = C.health; const done = store.get('docq', {});
     el.innerHTML = `
       <div class="danger"><h3>${esc(H.er.title)}</h3><ul class="clean">${H.er.items.map(i => `<li>${i}</li>`).join('')}</ul><p>${H.er.note}</p>${srcList(H.er.sources)}</div>
+      <div class="warn"><h3>${esc(H.soon.title)}</h3><ul class="clean">${H.soon.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>${srcList(H.soon.sources)}</div>
       <div class="card"><h2>שאלות ומשימות לפני היציאה</h2><p class="sub">סמן כשקיבלת תשובה.</p>
         <div class="screen" style="gap:8px">${H.doctor.map(q => `<label class="check"><input type="checkbox" data-q="${q.id}" ${done[q.id] ? 'checked' : ''}><span>${q.text}</span></label>`).join('')}</div></div>
       ${H.sections.map(s => fold(s)).join('')}
+      <div class="note"><b>מה חסר בתוכנית:</b> ${esc(C.gap)}</div>
       <div class="card"><h2>על האפליקציה</h2><p class="sub">${C.about}</p></div>`;
     $$('[data-q]', el).forEach(i => i.onchange = () => { const d = store.get('docq', {}); d[i.dataset.q] = i.checked; store.set('docq', d); });
   };
@@ -200,22 +203,40 @@
   function buildSteps(items) {
     const steps = [];
     items.forEach((it, ei) => {
-      const x = C.ex[it.id], d = it.dose || x.dose;
+      const x = C.ex[it.id], d = it.dose || x.dose, mv = MV[x.move] || {};
       const sides = d.perSide ? ['צד ימין', 'צד שמאל'] : [''];
+      const doseText = it.doseText || x.doseText;
       for (let s = 1; s <= d.sets; s++) {
+        const reps = d.repsBySet ? d.repsBySet[s - 1] : d.reps;
+        const label = d.setLabels ? d.setLabels[s - 1] : '';
         sides.forEach((side, si) => {
-          if (d.hold && d.reps) steps.push({ kind: 'repHold', ei, id: it.id, set: s, sets: d.sets, side, reps: d.reps, hold: d.hold, relax: d.relax || 3 });
-          else if (d.hold) steps.push({ kind: 'hold', ei, id: it.id, set: s, sets: d.sets, side, hold: d.hold, holdText: d.holdText });
-          else steps.push({ kind: 'reps', ei, id: it.id, set: s, sets: d.sets, side, reps: d.reps });
+          const holdKey = d.setKeys ? d.setKeys[s - 1] : (mv.holdKeys ? mv.holdKeys[si] : 1);
+          const base = { ei, id: it.id, set: s, sets: d.sets, side, label, doseText, holdKey };
+          if (d.hold && reps) steps.push(Object.assign({ kind: 'repHold', reps, hold: d.hold, relax: d.relax || 3 }, base));
+          else if (d.hold) steps.push(Object.assign({ kind: 'hold', hold: d.hold }, base));
+          else steps.push(Object.assign({ kind: 'reps', reps, repsText: d.repsText }, base));
           const lastSide = si === sides.length - 1;
-          if (!lastSide) steps.push({ kind: 'switch', ei, id: it.id, secs: 5 });
+          if (!lastSide) steps.push({ kind: 'switch', ei, id: it.id, secs: 5, doseText });
         });
-        if (s < d.sets) steps.push({ kind: 'rest', ei, id: it.id, secs: settings.rest });
+        if (s < d.sets) steps.push({ kind: 'rest', ei, id: it.id, secs: settings.rest, doseText });
       }
-      if (ei < items.length - 1) steps.push({ kind: 'next', ei: ei + 1, id: items[ei + 1].id });
+      if (ei < items.length - 1) steps.push({ kind: 'next', ei: ei + 1, id: items[ei + 1].id, doseText: items[ei + 1].doseText || C.ex[items[ei + 1].id].doseText });
     });
     steps.push({ kind: 'done' });
     return steps;
+  }
+
+  // rough duration in minutes, from the same steps the player runs
+  function estimateMin(items) {
+    let sec = 0;
+    for (const st of buildSteps(items)) {
+      if (st.kind === 'reps') sec += st.reps * 4 + 5;
+      else if (st.kind === 'repHold') sec += 3 + st.reps * (st.hold + st.relax);
+      else if (st.kind === 'hold') sec += 3 + st.hold;
+      else if (st.kind === 'rest' || st.kind === 'switch') sec += st.secs;
+      else if (st.kind === 'next') sec += 10;
+    }
+    return Math.round(sec / 60);
   }
 
   let S = null; // session state
@@ -280,31 +301,36 @@
     const fig = S.fig;
     const body = $('.pbody', pl);
     const dots = st.sets ? `<div class="dots" aria-label="סט ${st.set} מתוך ${st.sets}">${Array.from({ length: st.sets }, (_, k) => `<span class="${k < st.set - 1 ? 'on' : ''}"></span>`).join('')}</div>` : '';
-    const head = `<div class="row"><h2 class="grow">${esc(x.name)}</h2><span class="chip">${esc(x.doseText)}</span></div>${dots}`;
+    const head = `<div class="row"><h2 class="grow">${esc(x.name)}</h2><span class="chip">${esc(st.doseText || x.doseText)}</span></div>${dots}`;
+    const tag = [st.label, st.side].filter(Boolean).join(' · ');
     const nav = `<div class="row" style="justify-content:space-between"><button class="btn ghost small" data-prev ${S.i === 0 ? 'disabled' : ''}>הקודם</button><button class="btn ghost small" data-skip>כואב? דלג על התרגיל</button></div>`;
     const tip = `<p class="sub" style="text-align:center">${esc(x.cue || '')}</p>`;
     const bind = () => { const p = $('[data-prev]', body); if (p) p.onclick = () => go(-1); const s = $('[data-skip]', body); if (s) s.onclick = skipExercise; };
 
     if (st.kind === 'reps') {
       fig.speed = settings.speed; fig.play();
-      body.innerHTML = `${head}<div class="big">${st.reps}</div><div class="phase">חזרות${st.side ? ' · ' + st.side : ''} · בקצב של האנימציה</div>${tip}<button class="btn" data-ok>סיימתי סט</button>${nav}`;
+      const big = st.repsText ? `<div class="big" style="font-size:1.6rem;line-height:1.3">${esc(st.repsText)}</div>` : `<div class="big">${st.reps}</div><div class="phase">חזרות${tag ? ' · ' + esc(tag) : ''}</div>`;
+      body.innerHTML = `${head}${big}<p class="phase">לאט, בקצב של האנימציה. סט ${st.set} מתוך ${st.sets}</p>${tip}<button class="btn" data-ok>סיימתי סט</button>${nav}`;
       $('[data-ok]', body).onclick = () => go(1); bind();
-      if (first || !keepFig) speak(`${x.name}. ${st.reps} חזרות${st.side ? ', ' + st.side : ''}`); else speak(`סט ${st.set}${st.side ? ', ' + st.side : ''}`);
+      const what = st.repsText || `${st.reps} חזרות`;
+      if (first || !keepFig) speak(`${x.name}. ${what}${st.side ? ', ' + st.side : ''}`); else speak(`סט ${st.set}${st.side ? ', ' + st.side : ''}`);
     } else if (st.kind === 'hold' || st.kind === 'repHold') {
       const isRep = st.kind === 'repHold';
       body.innerHTML = `${head}<div class="ring"><div><div class="big" id="tv">${st.hold}</div></div></div>
-        <div class="phase" id="ph">${isRep ? `חזרה <b id="rn">1</b> מתוך ${st.reps}` : 'החזקה'}${st.side ? ' · ' + st.side : ''}</div>${tip}
+        <div class="phase" id="ph">${isRep ? `${st.reps} חזרות, החזקה ${st.hold} שנ׳` : `החזקה ${st.hold} שנ׳`}${tag ? ' · ' + esc(tag) : ''}</div>${tip}
         <button class="btn" data-go>התחל${isRep ? ` ${st.reps} חזרות` : ' החזקה'}</button>${nav}`;
       bind();
       fig.showKey(0);
-      if (first || !keepFig) speak(`${x.name}. ${isRep ? st.reps + ' חזרות, החזקה של ' + st.hold + ' שניות' : 'החזקה של ' + st.hold + ' שניות'}${st.side ? ', ' + st.side : ''}`);
+      if (first || !keepFig) speak(`${x.name}. ${isRep ? st.reps + ' חזרות, החזקה של ' + st.hold + ' שניות' : 'החזקה של ' + st.hold + ' שניות'}${tag ? ', ' + tag : ''}`);
+      else if (tag) speak(tag);
+      if (st.label) fig.showKey(st.holdKey);
       const ring = $('.ring', body);
       $('[data-go]', body).onclick = e => {
         e.target.disabled = true; e.target.textContent = 'עצור';
         e.target.disabled = false; e.target.onclick = () => { clearInterval(S.timer); renderStep(); };
         let rep = 1;
         const holdPhase = () => {
-          fig.showKey(1); $('#ph', body).innerHTML = isRep ? `מחזיקים · חזרה ${rep} מתוך ${st.reps}${st.side ? ' · ' + st.side : ''}` : `מחזיקים${st.side ? ' · ' + st.side : ''}`;
+          fig.showKey(st.holdKey); $('#ph', body).innerHTML = isRep ? `מחזיקים · חזרה ${rep} מתוך ${st.reps}${tag ? ' · ' + esc(tag) : ''}` : `מחזיקים${tag ? ' · ' + esc(tag) : ''}`;
           beep(880, .12); if (isRep) speak(rep === 1 ? 'החזק' : String(rep)); else speak('החזק');
           countdown(st.hold, (l, p) => { $('#tv', body).textContent = l; ring.style.setProperty('--p', p); }, () => {
             beep(660, .2, 2);
@@ -336,7 +362,7 @@
       pl.innerHTML = `<div class="row"><button class="iconbtn" data-x aria-label="יציאה מהאימון">${ICON.close}</button><div class="grow"><div class="prog"><i style="width:${pct}%"></i></div></div></div>
         <p class="lbl" style="text-align:center;margin-top:8px">התרגיל הבא</p>
         <div class="pfig"><div class="figbox"></div></div><div class="cap"></div>
-        <div class="pbody"><div class="row"><h2 class="grow">${esc(nx.name)}</h2><span class="chip">${esc(nx.doseText)}</span></div><p>${nx.purpose}</p><button class="btn" data-ok>אני מוכן</button>
+        <div class="pbody"><div class="row"><h2 class="grow">${esc(nx.name)}</h2><span class="chip">${esc(st.doseText || nx.doseText)}</span></div><p>${nx.purpose}</p><button class="btn" data-ok>אני מוכן</button>
         <div class="row" style="justify-content:space-between"><button class="btn ghost small" data-prev>הקודם</button><button class="btn ghost small" data-skipn>דלג על התרגיל הזה</button></div></div>`;
       const f = mountFig($('.pfig .figbox', pl), nx.move); f.play();
       speak('התרגיל הבא: ' + nx.name);
@@ -352,7 +378,7 @@
     if (key === 'home') return { title: 'אימון חיזוק', items: C.plan.home.map(id => ({ id })), logKey: 'home' };
     if (key === 'stretch') return { title: 'מתיחות', items: C.plan.stretch.map(id => ({ id })), logKey: 'stretch' };
     const r = C.trail.routines.find(r => r.id === key);
-    if (r) return { title: r.title, items: r.items.filter(i => C.ex[i.id]).map(i => ({ id: i.id, dose: i.dose })), logKey: r.id };
+    if (r) return { title: r.title, items: r.items.filter(i => C.ex[i.id] && i.dose).map(i => ({ id: i.id, dose: i.dose, doseText: i.doseText })), logKey: r.id };
     return null;
   }
   document.addEventListener('click', e => { const b = e.target.closest('[data-start]'); if (b) { const s = sessionFor(b.dataset.start); if (s) startSession(s); } });
