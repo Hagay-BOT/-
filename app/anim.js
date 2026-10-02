@@ -253,12 +253,12 @@
     }
     // thumbnails redraw at ~25 fps to save battery; the main figure follows the display refresh
     schedule() {
-      if (this.thumb) this.tm = setTimeout(() => requestAnimationFrame(n => this.frame(n)), 40);
+      if (this.thumb) this.tm = setTimeout(() => { this.raf = requestAnimationFrame(n => this.frame(n)); }, 40);
       else this.raf = requestAnimationFrame(n => this.frame(n));
     }
     play() { if (this.playing) return; this.playing = true; this.t0 = null; this.raf = requestAnimationFrame(n => this.frame(n)); }
     pause() { this.playing = false; cancelAnimationFrame(this.raf); clearTimeout(this.tm); }
     showKey(i) { this.pause(); const k = this.keys[i % this.keys.length]; this.draw(k.pose); this.setCap(k.say); }
   }
-  global.Fig = { Figure, solve, L };
+  global.Fig = { Figure, solve, L, lerpPose, harmonize, ease, ang, dir };
 })(window);

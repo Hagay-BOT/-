@@ -33,7 +33,7 @@
       alt: 'ישיבה עם ברכיים כפופות מעט, גומייה סביב כפות הרגליים, משיכת מרפקים לאחור', face: 90,
       band: j => `M${j.toeN[0]} ${j.toeN[1] - 3} L${j.handN[0]} ${j.handN[1]}`,
       keys: [
-        { pose: { anchor: 'hip', at: [175, 186], trunk: -90, neck: -90, fr: 90, armN: { ik: [262, 158], bend: 1, h: 0 }, armF: { ik: [258, 160], bend: 1, h: 0 }, legN: { u: -10, l: 12, f: -76 }, legF: { u: -9, l: 13, f: -76 } }, hold: .8, move: 1.3, say: 'גב זקוף, ידיים מושטות, הגומייה מתוחה קלות' },
+        { pose: { anchor: 'hip', at: [175, 186], trunk: -90, neck: -90, fr: 90, armN: { ik: [230, 150], bend: 1, h: 0 }, armF: { ik: [227, 152], bend: 1, h: 0 }, legN: { u: -10, l: 12, f: -76 }, legF: { u: -9, l: 13, f: -76 } }, hold: .8, move: 1.3, say: 'גב זקוף, ידיים מושטות, הגומייה מתוחה קלות' },
         { pose: { anchor: 'hip', at: [175, 186], trunk: -90, neck: -90, fr: 90, sh: [-3, 0], armN: { ik: [196, 150], bend: 1, h: 0 }, armF: { ik: [192, 152], bend: 1, h: 0 }, legN: { u: -10, l: 12, f: -76 }, legF: { u: -9, l: 13, f: -76 }, hl: [['upTrunk', 'chest'], ['shoulder', 'elbowN']] }, hold: 1, move: 1.6, say: 'מקרבים שכמות, מרפקים צמודים לגוף', sayMove: 'מושכים מרפקים לאחור' }
       ]
     },
@@ -59,7 +59,7 @@
       alt: 'פלאנק צידי על המרפק והברכיים, הרמת האגן לקו ישר', face: -90,
       keys: [
         { pose: { anchor: 'hip', at: [224, 188], trunk: 197, neck: 197, fr: -90, armF: { ep: [152, 194], wp: [124, 194], h: 0 }, armN: { ik: [214, 180], bend: 1, h: 0 }, legN: { u: 2, l: -50, f: -140 }, legF: { u: 3, l: -48, f: -140 } }, hold: .8, move: 1.6, say: 'שוכבים על הצד, מרפק מתחת לכתף, ברכיים כפופות' },
-        { pose: { anchor: 'hip', at: [216, 166], trunk: 194, neck: 194, fr: -90, armF: { ep: [152, 194], wp: [124, 194], h: 0 }, armN: { ik: [208, 158], bend: 1, h: 0 }, legN: { u: 20, l: -30, f: -120 }, legF: { u: 21, l: -28, f: -120 }, hl: [['lowTrunk', 'upTrunk']] }, hold: 2.5, move: 1.6, say: 'קו ישר מהראש לברכיים. מחזיקים', sayMove: 'מרימים את האגן' }
+        { pose: { anchor: 'hip', at: [214, 178], trunk: 194, neck: 194, fr: -90, armF: { ep: [152, 194], wp: [124, 194], h: 0 }, armN: { ik: [208, 158], bend: 1, h: 0 }, legN: { u: 20, l: -30, f: -120 }, legF: { u: 21, l: -28, f: -120 }, hl: [['lowTrunk', 'upTrunk']] }, hold: 2.5, move: 1.6, say: 'קו ישר מהראש לברכיים. מחזיקים', sayMove: 'מרימים את האגן' }
       ]
     },
     bridge: {
@@ -73,7 +73,7 @@
       alt: 'שכיבה על הצד, ברכיים כפופות, פתיחת הברך העליונה בלי לגלגל את האגן', face: -90, mat: false,
       keys: [
         { pose: { anchor: 'hip', at: [240, 184], trunk: 180, neck: 182, fr: -90, armF: { u: 182, l: 182, h: 0 }, armN: { ik: [222, 172], bend: -1, h: 0 }, legF: { kp: [276, 194], ap: [300, 186], f: 0 }, legN: { kp: [274, 186], ap: [300, 182], f: 0 } }, hold: .8, move: 1.4, say: 'שוכבים על הצד, ברכיים כפופות, עקבים צמודים' },
-        { pose: { anchor: 'hip', at: [240, 184], trunk: 180, neck: 182, fr: -90, armF: { u: 182, l: 182, h: 0 }, armN: { ik: [222, 172], bend: -1, h: 0 }, legF: { kp: [276, 194], ap: [300, 186], f: 0 }, legN: { kp: [262, 146], ap: [300, 182], f: 0 }, hl: [['hip', 'thighTopN']] }, hold: 1, move: 1.4, say: 'הברך העליונה נפתחת. העקבים נשארים צמודים', sayMove: 'פותחים כמו צדפה' }
+        { pose: { anchor: 'hip', at: [240, 184], trunk: 180, neck: 182, fr: -90, armF: { u: 182, l: 182, h: 0 }, armN: { ik: [222, 172], bend: -1, h: 0 }, legF: { kp: [276, 194], ap: [300, 186], f: 0 }, legN: { kp: [266, 152], ap: [300, 182], f: 0 }, hl: [['hip', 'thighTopN']] }, hold: 1, move: 1.4, say: 'הברך העליונה נפתחת. העקבים נשארים צמודים', sayMove: 'פותחים כמו צדפה' }
       ]
     },
     hipflexor: {
@@ -96,7 +96,7 @@
       props: (g, el) => { el('rect', { x: 92, y: 10, width: 10, height: 190, class: 'wall' }, g); },
       keys: [
         { pose: standing({ at: [190, 118], trunk: -100, neck: -100, armN: { ik: [106, 64], bend: -1, h: -90 }, armF: { ik: [106, 70], bend: -1, h: -90 }, legN: { ik: [156, 194], bend: -1, f: 180 }, legF: { ik: [256, 194], bend: -1, f: 172 } }), hold: 3, move: 2, say: 'גרסה 1: ברך אחורית ישרה, עקב על הרצפה', sayMove: 'מכופפים מעט את הברך האחורית' },
-        { pose: standing({ at: [196, 128], trunk: -98, neck: -98, armN: { ik: [106, 72], bend: -1, h: -90 }, armF: { ik: [106, 78], bend: -1, h: -90 }, legN: { ik: [156, 194], bend: -1, f: 180 }, legF: { ik: [240, 194], bend: -1, f: 176 }, hl: [['calfF', 'ankleF']] }), hold: 3, move: 2, say: 'גרסה שנייה: מכופפים מעט את הברך האחורית, העקב נשאר למטה', sayMove: 'מכופפים מעט את הברך האחורית' }
+        { pose: standing({ at: [196, 128], trunk: -98, neck: -98, armN: { ik: [106, 72], bend: -1, h: -90 }, armF: { ik: [106, 78], bend: -1, h: -90 }, legN: { ik: [156, 194], bend: -1, f: 180 }, legF: { ik: [240, 194], bend: -1, f: 176 }, hl: [['calfF', 'ankleF']] }), hold: 3, move: 2, say: 'גרסה 2: מכופפים מעט את הברך האחורית, העקב נשאר למטה', sayMove: 'מכופפים מעט את הברך האחורית' }
       ]
     },
     catcow: {
@@ -116,7 +116,9 @@
         { pose: standing({ sh: [0, 0] }), hold: .4, move: .7, say: 'ועכשיו לכיוון השני' },
         { pose: standing({ sh: [-1, -11] }), hold: .1, move: .7, say: 'גלגול לפנים: מעלה' },
         { pose: standing({ sh: [-8, -4] }), hold: .1, move: .7, say: 'גלגול לפנים: קדימה' },
-        { pose: standing({ sh: [-3, 3] }), hold: .1, move: .7, say: 'גלגול לפנים: מטה' }
+        { pose: standing({ sh: [-3, 3] }), hold: .1, move: .7, say: 'גלגול לפנים: מטה' },
+        { pose: standing({ sh: [0, 0] }), hold: .3, move: .8, say: 'ועכשיו קירוב שכמות' },
+        { pose: standing({ sh: [9, 1], hl: [['upTrunk', 'chest']] }), hold: 5, move: .8, say: 'קירוב שכמות: אחורה ולמטה, מחזיקים 5 שניות' }
       ]
     }
   };
