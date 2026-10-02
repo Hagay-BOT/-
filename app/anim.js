@@ -95,6 +95,29 @@
       sh: (a.sh || b.sh) ? [lerp((a.sh || [0, 0])[0], (b.sh || [0, 0])[0], t), lerp((a.sh || [0, 0])[1], (b.sh || [0, 0])[1], t)] : null
     };
   }
+  // express a limb as angles (u/l + foot/hand angle) from its solved joint positions
+  function limbAngles(j, kind, side, src) {
+    const root = kind === 'arm' ? j.shoulder : j.hip;
+    const mid = j[(kind === 'arm' ? 'elbow' : 'knee') + side], end = j[(kind === 'arm' ? 'wrist' : 'ankle') + side];
+    const o = { u: ang(root, mid), l: ang(mid, end) };
+    if (kind === 'arm') o.h = src.h || 0; else o.f = ang(end, j['toe' + side]);
+    return o;
+  }
+  const limbType = l => !l ? 'none' : l.ik ? 'ik' : l.kp || l.ep ? 'pts' : l.pin ? 'pin' : 'ang';
+  // make both poses use the same representation for every limb so interpolation is smooth
+  function harmonize(a, b) {
+    const pairs = [['armN', 'arm', 'N'], ['armF', 'arm', 'F'], ['legN', 'leg', 'N'], ['legF', 'leg', 'F']];
+    let ja = null, jb = null, A = a, B = b;
+    for (const [k, kind, side] of pairs) {
+      if (!a[k] || !b[k]) continue;
+      const ta = limbType(a[k]), tb = limbType(b[k]);
+      if (ta === tb && ta !== 'pin') continue;
+      ja = ja || solve(a); jb = jb || solve(b);
+      if (A === a) { A = Object.assign({}, a); B = Object.assign({}, b); }
+      A[k] = limbAngles(ja, kind, side, a[k]); B[k] = limbAngles(jb, kind, side, b[k]);
+    }
+    return [A, B];
+  }
   const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
   const NS = 'http://www.w3.org/2000/svg';
@@ -137,7 +160,7 @@
       this.body = el('g', { class: 'near' }, this.scene);
       this.nearLimbs = el('g', { class: 'near' }, this.scene);
       this.glow = el('g', {}, this.scene);
-      this.cap = container.parentElement && container.parentElement.querySelector('.cap');
+      this.cap = ex.capEl || (container.parentElement && container.parentElement.querySelector('.cap'));
       this.t0 = null; this.playing = false; this.speed = 1;
       this.keys = ex.keys;
       this.frameView();
@@ -211,10 +234,11 @@
       this.svg.setAttribute('viewBox', `${x0.toFixed(1)} ${y0.toFixed(1)} ${w.toFixed(1)} ${h.toFixed(1)}`);
       this.floor.setAttribute('x1', x0); this.floor.setAttribute('x2', x0 + w);
     }
-    setCap(s) { if (this.cap) this.cap.textContent = s || ''; }
+    setCap(s) { if (this.cap && s !== undefined && this.cap.textContent !== s) this.cap.textContent = s || ''; }
     frame(now) {
       if (!this.playing) return;
       if (this.t0 === null) this.t0 = now;
+
       let t = ((now - this.t0) / 1000 * this.speed) % this.total;
       const ks = this.keys;
       for (let i = 0; i < ks.length; i++) {
@@ -222,13 +246,18 @@
         const mv = k.move || 0, hd = k.hold || 0;
         if (t < hd) { this.draw(k.pose); this.setCap(k.say); break; }
         t -= hd;
-        if (t < mv) { this.draw(lerpPose(k.pose, nk.pose, ease(t / mv))); this.setCap(nk.sayMove || k.sayMove || nk.say); break; }
+        if (t < mv) { const key = i; if (this._hk !== key) { this._hk = key; this._hp = harmonize(k.pose, nk.pose); } this.draw(lerpPose(this._hp[0], this._hp[1], ease(t / mv))); this.setCap(nk.sayMove || k.sayMove || nk.say); break; }
         t -= mv;
       }
-      this.raf = requestAnimationFrame(n => this.frame(n));
+      this.schedule();
+    }
+    // thumbnails redraw at ~25 fps to save battery; the main figure follows the display refresh
+    schedule() {
+      if (this.thumb) this.tm = setTimeout(() => requestAnimationFrame(n => this.frame(n)), 40);
+      else this.raf = requestAnimationFrame(n => this.frame(n));
     }
     play() { if (this.playing) return; this.playing = true; this.t0 = null; this.raf = requestAnimationFrame(n => this.frame(n)); }
-    pause() { this.playing = false; cancelAnimationFrame(this.raf); }
+    pause() { this.playing = false; cancelAnimationFrame(this.raf); clearTimeout(this.tm); }
     showKey(i) { this.pause(); const k = this.keys[i % this.keys.length]; this.draw(k.pose); this.setCap(k.say); }
   }
   global.Fig = { Figure, solve, L };

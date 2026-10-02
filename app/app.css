@@ -4,9 +4,8 @@
 @font-face{font-family:Rubik;font-weight:700;font-display:swap;src:url(fonts/rubik-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF}
 @font-face{font-family:Assistant;font-weight:400;font-display:swap;src:url(fonts/assistant-hebrew-400-normal.woff2) format('woff2');unicode-range:U+0307-0308,U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F}
 @font-face{font-family:Assistant;font-weight:400;font-display:swap;src:url(fonts/assistant-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF}
-@font-face{font-family:Assistant;font-weight:600;font-display:swap;src:url(fonts/assistant-hebrew-600-normal.woff2) format('woff2');unicode-range:U+0307-0308,U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F}
-@font-face{font-family:Assistant;font-weight:600;font-display:swap;src:url(fonts/assistant-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF}
 @font-face{font-family:Assistant;font-weight:700;font-display:swap;src:url(fonts/assistant-hebrew-700-normal.woff2) format('woff2');unicode-range:U+0307-0308,U+0590-05FF,U+200C-2010,U+20AA,U+25CC,U+FB1D-FB4F}
+@font-face{font-family:Assistant;font-weight:700;font-display:swap;src:url(fonts/assistant-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF,U+2000-206F,U+2190-21FF}
 
 /* Layout: phone-first single column; fixed bottom tab bar; guided player is a full-screen layer */
 :root{
@@ -14,7 +13,7 @@
   --fg:#1d2620; --muted:#5d6a60;
   --accent:#2f6b4f; --accent-2:#e7f0ea; --on-accent:#ffffff;
   --fig:#2f5a46; --fig-far:#aebfb3; --fig-line:#ffffff; --hl:#e0703a; --band:#d0533e; --mat:#d6e2d9;
-  --warn:#b4531d; --warn-bg:#fbefe6; --danger:#b3261e; --danger-bg:#fbe9e7;
+  --warn:#9a4313; --warn-bg:#fbefe6; --danger:#b3261e; --danger-bg:#fbe9e7;
   --display:Rubik,'Arial Hebrew',system-ui,sans-serif; --body:Assistant,'Arial Hebrew',system-ui,sans-serif;
   --r:16px; --tabh:64px;
   color-scheme:light;
@@ -49,7 +48,7 @@ main{padding:0 16px calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 24px);m
 .tabs{position:fixed;bottom:0;left:0;right:0;z-index:10;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
 .tabs button{flex:1;height:var(--tabh);border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:500 .74rem var(--display);color:var(--muted);cursor:pointer}
 .tabs svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.tabs button[aria-selected=true]{color:var(--accent)}
+.tabs button[aria-current=page]{color:var(--accent)}
 
 /* cards & blocks */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
@@ -58,7 +57,8 @@ main{padding:0 16px calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 24px);m
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:10px 18px;border-radius:14px;border:0;background:var(--accent);color:var(--on-accent);font:500 1rem var(--display);cursor:pointer;text-decoration:none}
 .hero .btn{background:var(--on-accent);color:var(--accent)}
 .btn.ghost{background:var(--surface2);color:var(--fg)}
-.btn.small{min-height:38px;padding:6px 14px;font-size:.9rem}
+.btn.small{min-height:44px;padding:6px 14px;font-size:.9rem}
+.hero .btn.alt{background:rgba(0,0,0,.28);color:#fff}
 .btn:disabled{opacity:.4}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .grow{flex:1}
@@ -108,9 +108,12 @@ svg.fig{width:100%;height:100%;display:block}
 .mist li::before{content:'✕';color:var(--warn);font-weight:700;margin-inline-end:8px}
 
 /* session player */
-.player{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;padding:calc(env(safe-area-inset-top,0px) + 8px) 16px calc(env(safe-area-inset-bottom,0px) + 12px)}
-.player .pfig{flex:1 1 auto;min-height:150px;max-height:42vh;display:flex;align-items:center}
-.player .pfig .figbox{width:100%;aspect-ratio:400/230;max-height:100%}
+.player{position:fixed;inset:0;z-index:30;background:var(--bg);display:flex;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:calc(env(safe-area-inset-top,0px) + 8px) 16px calc(env(safe-area-inset-bottom,0px) + 12px)}
+.player .pfig{flex:0 1 auto;min-height:0;display:flex;flex-direction:column;align-items:stretch;gap:4px}
+.player .pfig .cap{min-height:1.4em;font-size:.9rem}
+@media (max-height:700px){.player .pfig .figbox{max-height:30vh}.player .ring{width:110px;height:110px}.player .ring>div{width:92px;height:92px}.player .big{font-size:2.6rem}}
+@media (max-height:600px){.player .pfig .figbox{max-height:26vh}.player .pfig .cap{display:none}.player .pbody{gap:6px}}
+.player .pfig .figbox{width:100%;aspect-ratio:400/230;max-height:38vh;margin:0 auto}
 .prog{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}
 .prog i{display:block;height:100%;background:var(--accent);transition:width .35s}
 .big{font:700 3.6rem/1 var(--display);font-variant-numeric:tabular-nums;text-align:center}
@@ -145,3 +148,6 @@ input[type=number],select{font:inherit;padding:8px 10px;border-radius:10px;borde
 .extile .chip{white-space:normal;max-width:100%}
 body{overflow-x:clip}
 main,.screen,.card{min-width:0}
+
+.src a{display:inline-block;padding:6px 2px}
+.hint{font-size:.85rem;color:var(--muted);text-align:center}

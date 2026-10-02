@@ -6,14 +6,26 @@
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
   /* ---------- storage ---------- */
+  // localStorage with an in-memory fallback; values of the wrong type fall back to the default
+  const mem = {};
+  let storageOk = true;
+  const sameType = (v, d) => d === undefined || d === null || (Array.isArray(d) ? Array.isArray(v) : (typeof v === typeof d && (typeof d !== 'object' || (v !== null && !Array.isArray(v)))));
   const store = {
-    get(k, d) { try { const v = localStorage.getItem('gh_' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
-    set(k, v) { try { localStorage.setItem('gh_' + k, JSON.stringify(v)); } catch (e) { /* storage blocked */ } }
+    get(k, d) {
+      let v;
+      try { const raw = localStorage.getItem('gh_' + k); v = raw === null ? undefined : JSON.parse(raw); } catch (e) { v = mem[k]; }
+      if (v === undefined) v = mem[k];
+      return v !== undefined && sameType(v, d) ? v : d;
+    },
+    set(k, v) { mem[k] = v; try { localStorage.setItem('gh_' + k, JSON.stringify(v)); return true; } catch (e) { storageOk = false; return false; } }
   };
   const dayKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   const settings = Object.assign({ rest: 45, voice: true, sound: true, speed: 1 }, store.get('settings', {}));
   const saveSettings = () => store.set('settings', settings);
-  function logMark(key, val) { const log = store.get('log', {}); const k = dayKey(); log[k] = Object.assign({}, log[k], { [key]: val }); store.set('log', log); }
+  function logMark(key, val, day) {
+    const log = store.get('log', {}); const k = day || dayKey(); log[k] = Object.assign({}, log[k], { [key]: val });
+    if (!store.set('log', log)) toast('לא ניתן לשמור בטלפון (אחסון חסום). הסימון יישמר רק עד סגירת האפליקציה.');
+  }
 
   /* ---------- figures ---------- */
   const live = new Set();
@@ -31,6 +43,26 @@
     for (const e of es) { const f = e.target._fig; if (!f) continue; if (e.isIntersecting && !reduced) f.play(); else f.pause(); }
   }, { threshold: .25 }) : null;
   function stopFigs(root) { for (const f of live) { if (!root || root.contains(f.svg)) { f.pause(); live.delete(f); } } }
+  const layers = []; // open overlays, top-most last
+  function openLayer(el, opener) {
+    for (const f of live) if (!el.contains(f.svg) && f.playing) { f.pause(); f.resumeLater = true; }
+    const below = layers.length ? [layers[layers.length - 1].el] : $$('body > header, body > main, body > nav');
+    below.forEach(b => b.inert = true);
+    el.setAttribute('aria-modal', 'true');
+    layers.push({ el, opener, below });
+  }
+  function closeLayer(el) {
+    const i = layers.findIndex(l => l.el === el); if (i < 0) return;
+    const L = layers.splice(i, 1)[0];
+    L.below.forEach(b => b.inert = false);
+    const top = layers.length ? layers[layers.length - 1].el : document;
+    for (const f of live) if (f.resumeLater && top.contains(f.svg)) { f.resumeLater = false; if (!f.thumb) f.play(); }
+    if (!layers.length && io) $$('.figbox[data-move]').forEach(b => { if (b._fig) { b._fig.resumeLater = false; io.unobserve(b); io.observe(b); } });
+    if (L.opener && document.contains(L.opener)) try { L.opener.focus(); } catch (e) { }
+  }
+  // back navigation with a guard against double taps
+  let backPending = false;
+  function goBack() { if (backPending) return; backPending = true; history.back(); setTimeout(() => backPending = false, 600); }
 
   /* ---------- icons ---------- */
   const ICON = {
@@ -67,7 +99,7 @@
         <span class="lbl" style="color:inherit;opacity:.8">אימון חיזוק בבית · כ-${estimateMin(sessionFor('home').items)} דקות (עם מנוחה של ${settings.rest} שנ׳)</span>
         <h2>${esc(suggest)}</h2>
         <p class="sub">${week} אימוני חיזוק ב-7 הימים האחרונים. היעד: ${esc(C.plan.freqShort)}.</p>
-        <div class="row"><button class="btn" data-start="home">התחל אימון מודרך</button><button class="btn ghost small" data-start="stretch" style="background:rgba(255,255,255,.18);color:inherit">מתיחות בלבד</button></div>
+        <div class="row"><button class="btn" data-start="home">התחל אימון מודרך</button><button class="btn small alt" data-start="stretch">מתיחות בלבד</button></div>
       </div>
       <div class="danger"><h3>לפני הכל</h3><p>${C.plan.doctorFirst}</p></div>
       <div class="card"><h2>היום</h2><div class="screen" style="gap:8px">${checks.map(([k, l]) => `<label class="check"><input type="checkbox" data-log="${k}" ${t[k] ? 'checked' : ''}><span>${l}</span></label>`).join('')}</div></div>
@@ -159,15 +191,17 @@
       ${srcList(x.sources)}
       <button class="btn" data-one="${id}">תרגל עכשיו עם טיימר</button>
     </div>`;
+    const opener = document.activeElement;
     document.body.appendChild(sh);
+    openLayer(sh, opener);
     history.pushState({ sheet: 1 }, '');
     const f = mountFig($('#dfig', sh), x.move); f.speed = settings.speed;
     if (!reduced) f.play(); else { f.showKey(1); $('#dplay', sh).innerHTML = ICON.play; }
     $('#dplay', sh).onclick = () => { if (f.playing) { f.pause(); $('#dplay', sh).innerHTML = ICON.play; $('#dplay', sh).setAttribute('aria-label', 'נגן'); } else { f.play(); $('#dplay', sh).innerHTML = ICON.pause; $('#dplay', sh).setAttribute('aria-label', 'עצור'); } };
     $('#dspeed', sh).onchange = e => { f.speed = +e.target.value * settings.speed; f.t0 = null; };
-    const close = () => { stopFigs(sh); sh.remove(); };
+    const close = () => { stopFigs(sh); sh.remove(); closeLayer(sh); };
     sh._close = close;
-    $('[data-close]', sh).onclick = () => history.back();
+    $('[data-close]', sh).onclick = goBack;
     $('[data-one]', sh).onclick = () => { startSession({ title: x.name, items: [{ id, dose: x.dose }] }); };
     $('[data-close]', sh).focus();
   }
@@ -178,6 +212,7 @@
     if (!settings.sound) return;
     try {
       actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      if (actx.state !== 'running') actx.resume().catch(() => { });
       for (let i = 0; i < n; i++) {
         const o = actx.createOscillator(), g = actx.createGain(); const t = actx.currentTime + i * (dur + .08);
         o.frequency.value = freq; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.25, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + dur);
@@ -186,6 +221,7 @@
     } catch (e) { /* audio unavailable */ }
     if (navigator.vibrate) try { navigator.vibrate(n > 1 ? [120, 80, 120] : 150); } catch (e) { }
   }
+  function unlockAudio() { try { actx = actx || new (window.AudioContext || window.webkitAudioContext)(); if (actx.state !== 'running') actx.resume().catch(() => { }); } catch (e) { } }
   let heVoice = null;
   function pickVoice() { try { const vs = speechSynthesis.getVoices(); heVoice = vs.find(v => /^he|iw/i.test(v.lang)) || null; } catch (e) { } }
   if ('speechSynthesis' in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
@@ -195,7 +231,13 @@
   }
   let wake = null;
   async function keepAwake(on) {
-    try { if (on && 'wakeLock' in navigator) { wake = await navigator.wakeLock.request('screen'); } else if (!on && wake) { await wake.release(); wake = null; } } catch (e) { wake = null; }
+    try {
+      if (on && 'wakeLock' in navigator) {
+        const w = await navigator.wakeLock.request('screen');
+        if (!S) { w.release(); return; } // session closed while the request was pending
+        wake = w;
+      } else if (!on && wake) { const w = wake; wake = null; await w.release(); }
+    } catch (e) { wake = null; }
   }
 
   /* ---------- guided session ---------- */
@@ -243,18 +285,20 @@
   function startSession(sess) {
     if (S) endSession(true);
     const pl = document.createElement('div'); pl.className = 'player'; pl.setAttribute('role', 'dialog'); pl.setAttribute('aria-label', 'אימון מודרך');
+    const opener = document.activeElement;
     document.body.appendChild(pl);
+    openLayer(pl, opener);
     history.pushState({ player: 1 }, '');
-    S = { sess, steps: buildSteps(sess.items), i: 0, pl, timer: null, skipped: new Set(), fig: null, figId: null, logKey: sess.logKey };
+    S = { sess, steps: buildSteps(sess.items), i: 0, pl, timer: null, adv: null, skipped: new Set(), fig: null, figId: null, logKey: sess.logKey, day: dayKey() };
     keepAwake(true);
-    beep(660, .05); // unlock audio on the starting tap
+    unlockAudio(); // unlock audio on the starting tap (iOS)
     renderStep(true);
   }
   function endSession(silent) {
     if (!S) return;
-    clearInterval(S.timer); stopFigs(S.pl); S.pl.remove(); keepAwake(false);
+    clearInterval(S.timer); clearTimeout(S.adv); stopFigs(S.pl); S.pl.remove(); closeLayer(S.pl); S = null; keepAwake(false);
     try { speechSynthesis.cancel(); } catch (e) { }
-    S = null; if (!silent) render();
+    if (!silent) render();
   }
   function countdown(secs, onTick, onEnd) {
     clearInterval(S.timer); let left = secs; const t0 = Date.now();
@@ -266,10 +310,16 @@
       onTick(left, 1 - left / secs);
     }, 250);
   }
-  function go(delta) { if (!S) return; clearInterval(S.timer); S.i = Math.max(0, Math.min(S.steps.length - 1, S.i + delta)); renderStep(); }
-  function skipExercise() { if (!S) return; const ei = S.steps[S.i].ei; S.skipped.add(S.sess.items[ei].id); let j = S.i; while (j < S.steps.length - 1 && S.steps[j].ei === ei && S.steps[j].kind !== 'next') j++; if (S.steps[j].kind === 'next') j++; clearInterval(S.timer); S.i = j; renderStep(); }
+  function go(delta) {
+    if (!S) return; clearInterval(S.timer); clearTimeout(S.adv);
+    S.i = Math.max(0, Math.min(S.steps.length - 1, S.i + delta));
+    if (delta < 0) { const st = S.steps[S.i]; if (st.id && st.kind !== 'next') S.skipped.delete(st.id); }
+    renderStep();
+  }
+  function skipExercise() { if (!S) return; clearTimeout(S.adv); const ei = S.steps[S.i].ei; S.skipped.add(S.sess.items[ei].id); let j = S.i; while (j < S.steps.length - 1 && S.steps[j].ei === ei && S.steps[j].kind !== 'next') j++; if (S.steps[j].kind === 'next') j++; clearInterval(S.timer); S.i = j; renderStep(); }
 
   function renderStep(first) {
+    clearTimeout(S.adv);
     const st = S.steps[S.i]; const pl = S.pl;
     const total = S.sess.items.length;
     if (st.kind === 'done') {
@@ -281,8 +331,8 @@
         ${S.skipped.size ? `<p class="sub">אם תרגיל כאב, כדאי לציין את זה לפיזיותרפיסט או לרופא.</p>` : ''}
         ${S.logKey ? `<button class="btn" data-save>שמור ביומן</button>` : ''}<button class="btn ghost" data-x>סגירה</button></div>`;
       speak('סיימת. כל הכבוד');
-      $$('[data-x]', pl).forEach(b => b.onclick = () => history.back());
-      const sv = $('[data-save]', pl); if (sv) sv.onclick = () => { logMark(S.logKey, true); sv.textContent = 'נשמר ביומן'; sv.disabled = true; };
+      $$('[data-x]', pl).forEach(b => b.onclick = goBack);
+      const sv = $('[data-save]', pl); if (sv) { sv.onclick = () => { logMark(S.logKey, true, S.day); sv.textContent = 'נשמר ביומן'; sv.disabled = true; }; sv.focus(); }
       return;
     }
     const x = C.ex[st.id];
@@ -293,10 +343,11 @@
       stopFigs(pl);
       pl.innerHTML = `
         <div class="row"><button class="iconbtn" data-x aria-label="יציאה מהאימון">${ICON.close}</button><div class="grow"><div class="prog"><i style="width:${pct}%"></i></div></div><span class="chip">${st.ei + 1}/${total}</span></div>
-        <div class="pfig"><div class="figbox"></div></div><div class="cap" aria-live="polite"></div>
+        <div class="pfig"><div class="figbox"></div><div class="cap" aria-live="polite"></div></div>
         <div class="pbody"></div>`;
       S.fig = mountFig($('.pfig .figbox', pl), x.move); S.figId = st.id;
-      $$('[data-x]', pl).forEach(b => b.onclick = () => history.back());
+      $$('[data-x]', pl).forEach(b => b.onclick = goBack);
+      $('[data-x]', pl).focus();
     } else { $('.prog i', pl).style.width = pct + '%'; $('.chip', pl).textContent = (st.ei + 1) + '/' + total; }
     const fig = S.fig;
     const body = $('.pbody', pl);
@@ -304,11 +355,11 @@
     const head = `<div class="row"><h2 class="grow">${esc(x.name)}</h2><span class="chip">${esc(st.doseText || x.doseText)}</span></div>${dots}`;
     const tag = [st.label, st.side].filter(Boolean).join(' · ');
     const nav = `<div class="row" style="justify-content:space-between"><button class="btn ghost small" data-prev ${S.i === 0 ? 'disabled' : ''}>הקודם</button><button class="btn ghost small" data-skip>כואב? דלג על התרגיל</button></div>`;
-    const tip = `<p class="sub" style="text-align:center">${esc(x.cue || '')}</p>`;
+    const tip = `<p class="sub" style="text-align:center">${esc(x.cue || '')}</p>` + (('wakeLock' in navigator) ? '' : '<p class="hint">כדי שהמסך לא יכבה בזמן החזקה: הגדרות ← תצוגה ← נעילה אוטומטית.</p>');
     const bind = () => { const p = $('[data-prev]', body); if (p) p.onclick = () => go(-1); const s = $('[data-skip]', body); if (s) s.onclick = skipExercise; };
 
     if (st.kind === 'reps') {
-      fig.speed = settings.speed; fig.play();
+      fig.speed = settings.speed; if (!reduced) fig.play(); else fig.showKey(1);
       const big = st.repsText ? `<div class="big" style="font-size:1.6rem;line-height:1.3">${esc(st.repsText)}</div>` : `<div class="big">${st.reps}</div><div class="phase">חזרות${tag ? ' · ' + esc(tag) : ''}</div>`;
       body.innerHTML = `${head}${big}<p class="phase">לאט, בקצב של האנימציה. סט ${st.set} מתוך ${st.sets}</p>${tip}<button class="btn" data-ok>סיימתי סט</button>${nav}`;
       $('[data-ok]', body).onclick = () => go(1); bind();
@@ -326,8 +377,9 @@
       if (st.label) fig.showKey(st.holdKey);
       const ring = $('.ring', body);
       $('[data-go]', body).onclick = e => {
-        e.target.disabled = true; e.target.textContent = 'עצור';
-        e.target.disabled = false; e.target.onclick = () => { clearInterval(S.timer); renderStep(); };
+        const btn = e.currentTarget; unlockAudio();
+        btn.textContent = 'עצור'; btn.disabled = true; setTimeout(() => { btn.disabled = false; }, 500);
+        btn.onclick = () => { clearInterval(S.timer); clearTimeout(S.adv); renderStep(); };
         let rep = 1;
         const holdPhase = () => {
           fig.showKey(st.holdKey); $('#ph', body).innerHTML = isRep ? `מחזיקים · חזרה ${rep} מתוך ${st.reps}${tag ? ' · ' + esc(tag) : ''}` : `מחזיקים${tag ? ' · ' + esc(tag) : ''}`;
@@ -337,7 +389,7 @@
             if (isRep && rep < st.reps) {
               fig.showKey(0); $('#ph', body).innerHTML = `משחררים · ${rep} מתוך ${st.reps}`; speak('שחרר');
               countdown(st.relax, (l, p) => { $('#tv', body).textContent = l; ring.style.setProperty('--p', p); }, () => { rep++; holdPhase(); });
-            } else { fig.showKey(0); speak('יופי'); setTimeout(() => S && S.steps[S.i] === st && go(1), 900); }
+            } else { fig.showKey(0); speak('יופי'); S.adv = setTimeout(() => S && S.steps[S.i] === st && go(1), 900); }
           });
         };
         // 3-second get-ready
@@ -361,12 +413,13 @@
       const nx = C.ex[st.id];
       pl.innerHTML = `<div class="row"><button class="iconbtn" data-x aria-label="יציאה מהאימון">${ICON.close}</button><div class="grow"><div class="prog"><i style="width:${pct}%"></i></div></div></div>
         <p class="lbl" style="text-align:center;margin-top:8px">התרגיל הבא</p>
-        <div class="pfig"><div class="figbox"></div></div><div class="cap"></div>
+        <div class="pfig"><div class="figbox"></div><div class="cap"></div></div>
         <div class="pbody"><div class="row"><h2 class="grow">${esc(nx.name)}</h2><span class="chip">${esc(st.doseText || nx.doseText)}</span></div><p>${nx.purpose}</p><button class="btn" data-ok>אני מוכן</button>
         <div class="row" style="justify-content:space-between"><button class="btn ghost small" data-prev>הקודם</button><button class="btn ghost small" data-skipn>דלג על התרגיל הזה</button></div></div>`;
-      const f = mountFig($('.pfig .figbox', pl), nx.move); f.play();
+      const f = mountFig($('.pfig .figbox', pl), nx.move); if (!reduced) f.play(); else f.showKey(1);
       speak('התרגיל הבא: ' + nx.name);
-      $$('[data-x]', pl).forEach(b => b.onclick = () => history.back());
+      $$('[data-x]', pl).forEach(b => b.onclick = goBack);
+      $('[data-ok]', pl).focus();
       $('[data-ok]', pl).onclick = () => go(1);
       $('[data-prev]', pl).onclick = () => go(-1);
       $('[data-skipn]', pl).onclick = () => { go(1); skipExercise(); };
@@ -386,15 +439,18 @@
   /* ---------- nav ---------- */
   const TITLES = { today: 'גב חזק לשביל', library: 'תרגילים', trail: 'בשביל', health: 'בריאות וידע' };
   let current = store.get('tab', 'today');
-  if (!TITLES[current]) current = 'today';
+  if (!Object.prototype.hasOwnProperty.call(TITLES, current)) current = 'today';
   function render() {
     stopFigs($('#view'));
     $('#title').textContent = TITLES[current];
-    $$('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === current));
+    $$('.tabs button').forEach(b => { if (b.dataset.tab === current) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     const v = $('#view'); v.innerHTML = ''; screens[current](v); window.scrollTo(0, 0);
   }
   $$('.tabs button').forEach(b => b.onclick = () => { current = b.dataset.tab; store.set('tab', current); render(); });
+  // history entries left over from a previous page load have nothing to close
+  if (history.state && (history.state.player || history.state.sheet)) history.replaceState(null, '');
   window.addEventListener('popstate', () => {
+    backPending = false;
     if (S) { endSession(); return; }
     const sh = $$('.sheet').pop(); if (sh) sh._close();
   });
@@ -402,13 +458,14 @@
 
   /* ---------- offline status ---------- */
   function netPill() {
-    const p = $('#net'); const ready = store.get('swReady', false);
+    const p = $('#net'); const ready = !!(navigator.serviceWorker && navigator.serviceWorker.controller) || store.get('swReady', false);
     p.textContent = navigator.onLine ? (ready ? 'זמין גם בלי קליטה' : 'מכין לשימוש בלי קליטה…') : 'בלי קליטה · עובד';
     p.classList.toggle('ok', ready || !navigator.onLine);
   }
   window.addEventListener('online', netPill); window.addEventListener('offline', netPill);
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(() => { store.set('swReady', true); netPill(); }).catch(() => netPill());
+    navigator.serviceWorker.register('sw.js').then(r => { r.update().catch(() => { }); return navigator.serviceWorker.ready; }).then(() => { store.set('swReady', true); netPill(); }).catch(() => netPill());
+    navigator.serviceWorker.addEventListener('controllerchange', netPill);
     navigator.serviceWorker.addEventListener('message', e => { if (e.data === 'updated') toast('גרסה חדשה נשמרה. היא תיטען בפתיחה הבאה.'); });
   }
   netPill();

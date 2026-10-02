@@ -1,14 +1,20 @@
-/* Offline-first service worker: precache the whole app, serve from cache, refresh in background. */
-const VERSION = 'v1';
+/* Offline-first service worker.
+   - install: precache every asset, bypassing the HTTP cache so a new VERSION never stores old files
+   - fetch: cache-first (query string ignored); the network is used only for files missing from the cache.
+     Updates arrive as a whole new VERSION, so files from two versions never mix
+   - activate: drop old caches and tell open pages an update is ready */
+const VERSION = 'v3';
 const CACHE = 'gav-hazak-' + VERSION;
 const ASSETS = [
   './', 'index.html', 'app.css', 'app.js', 'anim.js', 'moves.js', 'content.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
   'fonts/rubik-hebrew-500-normal.woff2', 'fonts/rubik-latin-500-normal.woff2', 'fonts/rubik-hebrew-700-normal.woff2', 'fonts/rubik-latin-700-normal.woff2',
-  'fonts/assistant-hebrew-400-normal.woff2', 'fonts/assistant-latin-400-normal.woff2', 'fonts/assistant-hebrew-600-normal.woff2', 'fonts/assistant-latin-600-normal.woff2', 'fonts/assistant-hebrew-700-normal.woff2'
+  'fonts/assistant-hebrew-400-normal.woff2', 'fonts/assistant-latin-400-normal.woff2', 'fonts/assistant-hebrew-700-normal.woff2', 'fonts/assistant-latin-700-normal.woff2'
 ];
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(CACHE)
+    .then(c => c.addAll(ASSETS.map(u => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
@@ -21,13 +27,20 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
+  const url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== location.origin) return;
+  const scope = new URL(self.registration.scope);
+  // navigations to unknown deeper paths: send them back to the app root so relative assets resolve
+  if (req.mode === 'navigate') {
+    const rel = url.pathname.slice(scope.pathname.length);
+    if (rel !== '' && rel !== 'index.html') { e.respondWith(Response.redirect(scope.href, 302)); return; }
+  }
   e.respondWith((async () => {
     const cache = await caches.open(CACHE);
-    const hit = await cache.match(req, { ignoreSearch: true }) || (req.mode === 'navigate' ? await cache.match('index.html') : null);
-    const net = fetch(req).then(res => { if (res && res.ok) cache.put(req, res.clone()); return res; }).catch(() => null);
-    if (hit) { e.waitUntil(net); return hit; }
-    const res = await net;
+    const key = url.origin + url.pathname; // ignore the query string
+    const hit = await cache.match(key) || (req.mode === 'navigate' ? await cache.match(scope.href) || await cache.match('index.html') : null);
+    if (hit) return hit;
+    const res = await fetch(req).catch(() => null);
     return res || new Response('אין חיבור והקובץ לא נשמר', { status: 503, headers: { 'Content-Type': 'text/plain; charset=utf-8' } });
   })());
 });
