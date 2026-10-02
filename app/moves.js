@@ -26,7 +26,7 @@
       hl: [],
       keys: [
         { pose: supine({ fr: 90 }), hold: 1.2, move: 1.2, say: 'מנח התחלה: ראש על מגבת מקופלת, מבט לתקרה' },
-        { pose: supine({ fr: 122, head: -4, hl: [['headBase', 'chest']] }), hold: 3, move: 1.2, say: 'מהנהנים בעדינות "כן": הסנטר פנימה, העורף מתארך', sayMove: 'מכניסים סנטר לאט' }
+        { pose: supine({ fr: 128, head: -12, hl: [['headBase', 'chest']] }), hold: 3, move: 1.2, say: 'מהנהנים בעדינות "כן": הסנטר פנימה, העורף מתארך', sayMove: 'מכניסים סנטר לאט' }
       ]
     },
     row: {
@@ -79,8 +79,8 @@
     hipflexor: {
       alt: 'מתיחת כופפי ירך בעמידה, רגל אחורית ישרה, האגן נדחף קדימה', face: -90,
       keys: [
-        { pose: standing({ at: [205, 116], armN: { ik: [212, 120], bend: -1, h: 0 }, armF: { ik: [208, 121], bend: -1, h: 0 }, legN: { ik: [170, 194], bend: -1, f: 180 }, legF: { u: 52, l: 52, f: 150 } }), hold: 1, move: 2, say: 'עמידת צעד, רגל אחורית ישרה, ידיים על המותניים' },
-        { pose: standing({ at: [196, 122], trunk: -88, armN: { ik: [203, 126], bend: -1, h: 0 }, armF: { ik: [199, 127], bend: -1, h: 0 }, legN: { ik: [170, 194], bend: -1, f: 180 }, legF: { u: 46, l: 46, f: 146 }, hl: [['hip', 'thighTopF']] }), hold: 3, move: 2, say: 'עצם הזנב מטה, ישבן מכווץ, משקל קדימה. מתיחה בקדמת הירך האחורית', sayMove: 'מגלגלים את האגן, ואז מעבירים משקל קדימה' }
+        { pose: standing({ at: [205, 116], armN: { ik: [212, 120], bend: -1, h: 0 }, armF: { ik: [208, 121], bend: -1, h: 0 }, legN: { ik: [176, 194], bend: -1, f: 180 }, legF: { u: 52, l: 52, f: 150 } }), hold: 1, move: 2, say: 'עמידת צעד, רגל אחורית ישרה, ידיים על המותניים' },
+        { pose: standing({ at: [196, 122], trunk: -88, armN: { ik: [203, 126], bend: -1, h: 0 }, armF: { ik: [199, 127], bend: -1, h: 0 }, legN: { ik: [176, 194], bend: -1, f: 180 }, legF: { u: 46, l: 46, f: 146 }, bend: 3, hl: [['hip', 'thighTopF']] }), hold: 3, move: 2, say: 'עצם הזנב מטה, ישבן מכווץ, משקל קדימה. מתיחה בקדמת הירך האחורית', sayMove: 'מגלגלים את האגן, ואז מעבירים משקל קדימה' }
       ]
     },
     hamstring: {
@@ -95,7 +95,7 @@
       alt: 'ידיים על הקיר, רגל אחורית ישרה, עקב על הרצפה', face: -90, mat: false,
       props: (g, el) => { el('rect', { x: 92, y: 10, width: 10, height: 190, class: 'wall' }, g); },
       keys: [
-        { pose: standing({ at: [190, 118], trunk: -100, neck: -100, armN: { ik: [106, 64], bend: -1, h: -90 }, armF: { ik: [106, 70], bend: -1, h: -90 }, legN: { ik: [156, 194], bend: -1, f: 180 }, legF: { ik: [256, 194], bend: -1, f: 172 } }), hold: 3, move: 2, say: 'גרסה 1: ברך אחורית ישרה, עקב על הרצפה', sayMove: 'מכופפים מעט את הברך האחורית' },
+        { pose: standing({ at: [190, 118], trunk: -100, neck: -100, armN: { ik: [106, 64], bend: -1, h: -90 }, armF: { ik: [106, 70], bend: -1, h: -90 }, legN: { ik: [156, 194], bend: -1, f: 180 }, legF: { ik: [256, 194], bend: -1, f: 172 }, hl: [['kneeF', 'calfF']] }), hold: 3, move: 2, say: 'גרסה 1: ברך אחורית ישרה, עקב על הרצפה', sayMove: 'מכופפים מעט את הברך האחורית' },
         { pose: standing({ at: [196, 128], trunk: -98, neck: -98, armN: { ik: [106, 72], bend: -1, h: -90 }, armF: { ik: [106, 78], bend: -1, h: -90 }, legN: { ik: [156, 194], bend: -1, f: 180 }, legF: { ik: [240, 194], bend: -1, f: 176 }, hl: [['calfF', 'ankleF']] }), hold: 3, move: 2, say: 'גרסה 2: מכופפים מעט את הברך האחורית, העקב נשאר למטה', sayMove: 'מכופפים מעט את הברך האחורית' }
       ]
     },

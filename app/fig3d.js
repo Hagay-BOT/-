@@ -16,7 +16,7 @@
   function css(name, fallback) { try { const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fallback; } catch (e) { return fallback; } }
 
   /* ---------- shared renderer + scene ---------- */
-  let R = null, scene, cam, matBody, matFar, matJoint, matHl, matBand, floorMat, matMat, parts = {}, glows = [], bands = [], wall, mat, sun, failed = false;
+  let towel, R = null, scene, cam, matBody, matFar, matJoint, matHl, matBand, floorMat, matMat, parts = {}, glows = [], bands = [], wall, mat, sun, failed = false;
   function init() {
     if (R || failed) return !!R;
     try {
@@ -48,6 +48,7 @@
     mat = new T.Mesh(new T.BoxGeometry(2.1, 0.012, 0.8), matMat); mat.position.y = 0.006; mat.receiveShadow = true; scene.add(mat);
     wall = new T.Mesh(new T.BoxGeometry(0.06, 2.2, 1.6), new T.MeshStandardMaterial({ color: 0xcfd6cf, roughness: 0.9 }));
     wall.receiveShadow = true; scene.add(wall);
+    towel = new T.Mesh(new T.BoxGeometry(0.3, 0.036, 0.26), new T.MeshStandardMaterial({ color: 0xe9d9b8, roughness: 0.95 })); towel.receiveShadow = true; towel.castShadow = true; scene.add(towel);
 
     const cyl = new T.CylinderGeometry(1, 1, 1, 18, 1, true);
     const sph = new T.SphereGeometry(1, 20, 14);
@@ -62,7 +63,7 @@
     }
     // torso: chest + abdomen + pelvis ellipsoids, neck, head
     ball('chest', 1, false, matBody); ball('belly', 1, false, matBody); ball('pelvis', 1, false, matBody);
-    seg('neck', .045, .05, false); ball('head', .105, false, matBody); ball('nose', .028, false, matBody);
+    seg('neck', .045, .05, false); ball('head', .105, false, matBody); ball('nose', .028, false, matBody); ball('chinNub', .045, false, matBody);
     for (let i = 0; i < 3; i++) { const g = new T.Mesh(sph, matHl); g.renderOrder = 5; scene.add(g); glows.push(g); }
     for (let i = 0; i < 2; i++) { const b = new T.Mesh(cyl, matBand); b.castShadow = true; scene.add(b); bands.push(b); }
     applyTheme();
@@ -111,17 +112,24 @@
     return J;
   }
 
-  /* ---------- side-lying builders (lying on the left side, facing +z, head toward -x) ---------- */
+  /* ---------- side-lying builders (lying on the RIGHT side, facing +z, head toward -x; mirrored in x for the left side) ---------- */
   const lerpV = (a, b, t) => a.clone().lerp(b, t);
   function rotateAbout(p, a, b, ang) { // rotate point p about axis a->b
     const axis = V(0, 0, 0).subVectors(b, a).normalize(); return p.clone().sub(a).applyAxisAngle(axis, ang).add(a);
+  }
+  // two-bone IK in 3D: elbow/knee placed toward `pole`, keeping both bone lengths
+  function ik3(a, c, l1, l2, pole) {
+    const ac = V(0, 0, 0).subVectors(c, a); let d = ac.length(); d = Math.min(d, l1 + l2 - 1e-3); const u = ac.normalize();
+    const x = (l1 * l1 - l2 * l2 + d * d) / (2 * d); const h = Math.sqrt(Math.max(0, l1 * l1 - x * x));
+    const p = pole.clone().sub(u.clone().multiplyScalar(pole.dot(u))).normalize();
+    return a.clone().add(u.multiplyScalar(x)).add(p.multiplyScalar(h));
   }
   const BUILD = {
     sideplank(t) {
       const W = V(0, 1, 0); // body width axis points up (top side)
       const elbow = V(-0.56, 0.045, 0.02), wristB = V(-0.56, 0.04, 0.3);
-      const chestLow = V(-0.48, 0.40, 0), chestHigh = V(-0.52, 0.50, 0);
-      const pelvisLow = V(0.12, 0.12, 0), pelvisHigh = V(0.07, 0.27, 0);
+      const chestLow = V(-0.47, 0.32, 0), chestHigh = V(-0.52, 0.50, 0);
+      const pelvisLow = V(0.12, 0.10, 0), pelvisHigh = V(0.07, 0.27, 0);
       const knee = V(0.5, 0.06 + WH, 0);
       const chest = lerpV(chestLow, chestHigh, t), pelvis = lerpV(pelvisLow, pelvisHigh, t);
       const bodyDir = V(0, 0, 0).subVectors(chest, pelvis).normalize();
@@ -130,27 +138,27 @@
       J.head = J.neckTop.clone().add(bodyDir.clone().multiplyScalar(0.11));
       J.shoulderF = chest.clone().add(bodyDir.clone().multiplyScalar(-0.05)).add(W.clone().multiplyScalar(-WS));
       J.shoulderN = chest.clone().add(bodyDir.clone().multiplyScalar(-0.05)).add(W.clone().multiplyScalar(WS));
-      J.elbowF = elbow; J.wristF = wristB; J.handF = wristB.clone().add(V(0.02, 0, 0.07));
+      J.wristF = wristB; J.handF = wristB.clone().add(V(0.02, 0, 0.07)); void elbow;
       J.hipJF = pelvis.clone().add(W.clone().multiplyScalar(-WH)); J.hipJN = pelvis.clone().add(W.clone().multiplyScalar(WH));
       J.wristN = J.hipJN.clone().add(V(-0.02, 0.07, 0.06)); J.handN = J.wristN.clone().add(V(0.06, 0, 0.02));
-      J.elbowN = lerpV(J.shoulderN, J.wristN, 0.5).add(V(0.0, 0.1, -0.12));
+      J.elbowN = ik3(J.shoulderN, J.wristN, 0.30, 0.28, V(0.1, 0.6, -0.8));
       for (const s of ['N', 'F']) {
-        const off = W.clone().multiplyScalar(s === 'N' ? WH : -WH);
-        const k = knee.clone().add(off); k.y = Math.max(k.y, 0.05);
+        const hip = J['hipJ' + s];
+        const tgt = knee.clone().add(V(0, s === 'N' ? WH : -WH, 0)); tgt.y = Math.max(tgt.y, 0.05);
+        const k = hip.clone().add(tgt.sub(hip).normalize().multiplyScalar(0.42)); // keep thigh length
         J['knee' + s] = k; J['ankle' + s] = k.clone().add(V(0.02, 0, -0.4)); J['toe' + s] = J['ankle' + s].clone().add(V(0.03, -0.02, -0.12));
       }
-      J.kneeN.y = J.kneeF.y + 2 * WH;
-      J.ankleN.y = J.kneeN.y; J.toeN.y = J.kneeN.y - 0.02;
+      J.elbowF = ik3(J.shoulderF, J.wristF, 0.30, 0.28, V(0, -1, -0.3));
       return J;
     },
     clam(t) {
       const W = V(0, 1, 0);
       const pelvis = V(0.18, 0.19, 0), chest = V(-0.46, 0.20, 0);
       const J = { width: W, chest, pelvis, faceDir: V(0, 0, 1) };
-      J.neckTop = V(-0.57, 0.22, 0); J.head = V(-0.69, 0.24, 0.02);
+      J.neckTop = V(-0.57, 0.2, 0); J.head = V(-0.69, 0.2, 0.02);
       J.shoulderF = chest.clone().add(V(0.03, -WS, 0)); J.shoulderN = chest.clone().add(V(0.03, WS, 0));
-      J.elbowF = V(-0.75, 0.05, -0.02); J.wristF = V(-0.98, 0.04, 0.0); J.handF = V(-1.06, 0.04, 0.02);
-      J.elbowN = V(-0.3, 0.26, 0.2); J.wristN = V(-0.18, 0.06, 0.32); J.handN = V(-0.1, 0.035, 0.36);
+      J.elbowF = V(-0.62, 0.04, 0.16); J.wristF = V(-0.76, 0.09, 0.02); J.handF = V(-0.8, 0.1, -0.05);
+      J.wristN = V(-0.18, 0.05, 0.32); J.elbowN = ik3(J.shoulderN, J.wristN, 0.30, 0.28, V(0.2, 0.5, 0.6)); J.handN = J.wristN.clone().add(V(0.06, -0.02, 0.03));
       const th = V(0.707, 0, 0.707).multiplyScalar(0.42), sh = V(0.707, 0, -0.707).multiplyScalar(0.40);
       for (const s of ['F', 'N']) {
         const hip = pelvis.clone().add(V(0, s === 'N' ? WH : -WH, 0));
@@ -184,7 +192,12 @@
     placeSeg(parts.neck, J.chest.clone().add(axis.clone().normalize().multiplyScalar(0.04)), J.neckTop);
     placeBall(parts.head, J.head);
     const face = J.faceDir || V(0, 0, 0);
-    parts.nose.visible = !!J.faceDir; if (J.faceDir) placeBall(parts.nose, J.head.clone().add(face.clone().normalize().multiplyScalar(0.1)));
+    parts.nose.visible = parts.chinNub.visible = !!J.faceDir;
+    if (J.faceDir) {
+      const f = face.clone().normalize(); placeBall(parts.nose, J.head.clone().add(f.clone().multiplyScalar(0.1)));
+      const down = V(0, 0, 0).subVectors(J.neckTop, J.head).normalize(); // chin sits between face and neck
+      placeBall(parts.chinNub, J.head.clone().add(f.multiplyScalar(0.06)).add(down.multiplyScalar(0.075)));
+    }
     for (const s of ['N', 'F']) {
       const has = n => !!J[n + s];
       for (const n of ['upper', 'fore', 'shoulder', 'elbow', 'wrist', 'hand']) parts[n + s].visible = has('elbow');
@@ -211,12 +224,18 @@
     wall.visible = !!showWall; if (showWall) wall.position.set(wallX, 1.1, 0);
   }
 
+  // mirror image for the second side: sagittal moves swap left/right (z), side-lying moves flip head-to-feet (x)
+  function mirrorJ(J, axis) {
+    const o = {};
+    for (const k in J) { const v = J[k]; if (v && v.isVector3) { const c = v.clone(); c[axis] = -c[axis]; o[k] = c; } else o[k] = v; }
+    return o;
+  }
   /* ---------- per-move 3D settings ---------- */
   const CAM = {
-    chin: { az: -35, el: 24, zoom: 1.05 }, row: { az: 40, el: 14 }, deadbug: { az: -28, el: 26 }, birddog: { az: 32, el: 18 },
-    sideplank: { az: 8, el: 16, build: 'sideplank' }, bridge: { az: -30, el: 20 }, clam: { az: 18, el: 32, build: 'clam' },
-    hipflexor: { az: 40, el: 10 }, hamstring: { az: -32, el: 22, bands: [['handN', 'toeN'], ['handF', 'toeN']] }, calf: { az: 48, el: 10, wall: true },
-    catcow: { az: 30, el: 18 }, shoulders: { az: 55, el: 10, zoom: 1.25 }
+    chin: { az: -12, el: 8, focus: 'head', zoom: 1 }, row: { az: 40, el: 14 }, deadbug: { az: -28, el: 26 }, birddog: { az: 32, el: 18 },
+    sideplank: { az: 25, el: 22, build: 'sideplank' }, bridge: { az: -30, el: 20 }, clam: { az: 18, el: 30, build: 'clam', zoom: 1.35, mat: true },
+    hipflexor: { az: 40, el: 10, zoom: 1.2 }, hamstring: { az: -32, el: 22, bands: [['handN', 'toeN'], ['handF', 'toeN']] }, calf: { az: 48, el: 10, wall: true },
+    catcow: { az: 30, el: 18 }, shoulders: { az: 120, el: 12, focus: 'upper', zoom: 1 }
   };
   CAM.row.bands = [['toeN', 'handN'], ['toeF', 'handF']];
 
@@ -226,7 +245,7 @@
       opts = opts || {};
       this.id = moveId; this.m = global.MOVES[moveId]; this.c = CAM[moveId] || {};
       this.keys = this.m.keys; this.total = this.keys.reduce((s, k) => s + (k.move || 0) + (k.hold || 0), 0);
-      this.thumb = !!opts.thumb; this.speed = 1; this.playing = false; this.t0 = null; this.drag = 0; this.userAz = 0; this.lastUser = -1e9;
+      this.thumb = !!opts.thumb; this.mirror = false; this.speed = 1; this.playing = false; this.t0 = null; this.drag = 0; this.userAz = 0; this.lastUser = -1e9;
       this.cv = document.createElement('canvas'); this.cv.className = 'fig3d'; this.cv.setAttribute('role', 'img'); this.cv.setAttribute('aria-label', this.m.alt || '');
       container.innerHTML = ''; container.appendChild(this.cv); this.svg = this.cv; // stopFigs() uses .svg for containment checks
       this.ctx = this.cv.getContext('2d');
@@ -244,10 +263,12 @@
       box.expandByPoint(V(box.min.x, 0, box.min.z));
       this.target = box.getCenter(V(0, 0, 0)); const size = box.getSize(V(0, 0, 0));
       this.radius = Math.max(size.x, size.y * 1.5, size.z * 0.8) * 0.5 + 0.08;
+      if (this.c.focus === 'head') { const J = this.joints(0, 0); this.target = J.neckTop.clone().lerp(J.chest, 0.15); this.target.y += 0.02; this.radius = 0.38; }
+      if (this.c.focus === 'upper') { const J = this.joints(0, 0); this.target = J.chest.clone().add(V(0, -0.05, 0)); this.radius = 0.62; }
     }
     joints(i, t) { // pose for key i moving toward key i+1 by eased t
       const ks = this.keys, k = ks[i], nk = ks[(i + 1) % ks.length];
-      if (this.c.build) { const pa = (k.p3 !== undefined ? k.p3 : i % 2), pb = (nk.p3 !== undefined ? nk.p3 : (i + 1) % 2); return BUILD[this.c.build](pa + (pb - pa) * t); }
+      if (this.c.build) { const pa = (k.p3 !== undefined ? k.p3 : i % 2), pb = (nk.p3 !== undefined ? nk.p3 : (i + 1) % 2); const J = BUILD[this.c.build](pa + (pb - pa) * t); J.hl = (t < .5 ? k : nk).pose.hl || this.m.hl; return J; }
       let p2 = k.pose;
       if (t > 0) { if (this._hk !== i) { this._hk = i; this._hp = global.Fig.harmonize(k.pose, nk.pose); } p2 = global.Fig.lerpPose(this._hp[0], this._hp[1], t); }
       const j = global.Fig.solve(p2);
@@ -277,17 +298,21 @@
       J = J || this.lastJ; if (!J) return; this.lastJ = J;
       const [w, h] = this.size();
       if (R.domElement.width !== w || R.domElement.height !== h) R.setSize(w, h, false);
-      pose(J, J.hl, this.c.bands, this.c.wall, (97 - CX) * K);
-      mat.visible = this.m.mat !== false;
+      mat.visible = this.c.mat !== undefined ? this.c.mat : this.m.mat !== false;
       // camera: base angle + gentle sway + user drag
+      if (this.mirror) J = mirrorJ(J, this.c.build ? 'x' : 'z');
+      pose(J, J.hl, this.c.bands, this.c.wall, (97 - CX) * K); // re-pose with mirrored joints
       const now = performance.now();
       const sway = this.thumb || (now - this.lastUser < 4000) || global.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : Math.sin(now / 2600) * 14;
-      const az = ((this.c.az || 0) + sway + this.userAz) * Math.PI / 180, el = (this.c.el || 15) * Math.PI / 180;
+      const mx = this.mirror && this.c.build ? -1 : 1;
+      const az = (mx * (this.c.az || 0) + sway + this.userAz) * Math.PI / 180, el = (this.c.el || 15) * Math.PI / 180;
       const d = this.radius / Math.tan(cam.fov * Math.PI / 360) / Math.min(1, w / h / 1.2) / (this.c.zoom || 1);
       cam.aspect = w / h; cam.updateProjectionMatrix();
-      cam.position.set(this.target.x + d * Math.sin(az) * Math.cos(el), this.target.y + d * Math.sin(el), this.target.z + d * Math.cos(az) * Math.cos(el));
-      cam.lookAt(this.target);
-      sun.target.position.copy(this.target); sun.position.set(this.target.x + 1.2, 3.2, this.target.z + 2.2);
+      const tg = this.target.clone(); if (this.mirror) { if (this.c.build) tg.x = -tg.x; else tg.z = -tg.z; }
+      cam.position.set(tg.x + d * Math.sin(az) * Math.cos(el), tg.y + d * Math.sin(el), tg.z + d * Math.cos(az) * Math.cos(el));
+      cam.lookAt(tg); this.tg = tg;
+      sun.target.position.copy(tg); sun.position.set(tg.x + 1.2, 3.2, tg.z + 2.2);
+      towel.visible = this.id === 'chin'; if (towel.visible) towel.position.set(J.head.x - 0.02, 0.018, J.head.z);
       R.render(scene, cam);
       this.ctx.clearRect(0, 0, w, h); this.ctx.drawImage(R.domElement, 0, 0, w, h);
     }

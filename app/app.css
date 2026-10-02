@@ -218,3 +218,10 @@ ul.tight{gap:2px}
 }
 .sheet .bar{flex-wrap:wrap}
 .sheet .bar h1{min-width:0}
+.stopline{font-size:.82rem;color:var(--danger);margin:0}
+.watch.small .stopline{display:inline-block;margin-top:2px}
+.qrow{display:flex;flex-direction:column;gap:2px}
+details.why summary{cursor:pointer;font-size:.82rem;color:var(--accent);padding:2px 14px;list-style:none}
+details.why summary::-webkit-details-marker{display:none}
+details.why p{font-size:.88rem;color:var(--muted);padding:0 14px 6px}
+@media (orientation:landscape) and (max-height:500px){.stage .figbox{max-height:58vh;width:auto;margin-inline:auto}}

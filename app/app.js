@@ -189,7 +189,7 @@
       <div class="danger"><h3>${esc(H.er.title)}</h3><ul class="clean tight">${H.erShort.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>
       <div class="warn"><h3>${esc(H.soon.title)}</h3><ul class="clean tight">${H.soon.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul></div>
       <div class="card"><h2>לשאול את הרופא</h2>
-        <div class="checks col">${H.doctor.map(q => `<label class="check"><input type="checkbox" data-q="${q.id}" ${done[q.id] ? 'checked' : ''}><span>${q.text}</span></label>`).join('')}</div></div>
+        <div class="checks col">${H.doctor.map(q => `<div class="qrow"><label class="check"><input type="checkbox" data-q="${q.id}" ${done[q.id] ? 'checked' : ''}><span>${esc(q.q || q.text)}</span></label>${q.q ? `<details class="why"><summary>למה?</summary><p>${q.text}</p></details>` : ''}</div>`).join('')}</div></div>
       <h2 class="group-title">להבין יותר</h2>
       ${fold({ title: 'סימני חירום: פרטים ומקורות', body: `<ul class="clean">${H.er.items.map(i => `<li>${i}</li>`).join('')}</ul><p>${H.er.note}</p>`, sources: H.er.sources.concat(H.soon.sources) })}
       ${H.sections.map((s, i) => fold(Object.assign({ id: i === 0 ? 'hf-main' : undefined }, s))).join('')}
@@ -210,6 +210,7 @@
           ${use3D ? `<span class="hint">${ICON.rotate} גרור לסיבוב</span>` : ''}</div></div>
       <ol class="steps3">${x.s3.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
       <div class="watch"><b>שים לב:</b> ${esc(x.watch)}</div>
+      <p class="stopline">${esc(C.stopLine)}</p>
       <button class="btn wide" data-one="${id}">${ICON.play}תרגל עכשיו עם טיימר</button>
       <details class="fold"><summary><span>הסבר מלא ומקורות</span></summary><div class="in">
         <p>${x.purpose}</p>
@@ -230,7 +231,7 @@
     const setBtn = playing => { const b = $('#dplay', sh); b.innerHTML = playing ? ICON.pause : ICON.play; b.setAttribute('aria-label', playing ? 'עצור' : 'נגן'); };
     if (!reduced) f.play(); else { f.showKey(1); setBtn(false); }
     $('#dplay', sh).onclick = () => { if (f.playing) { f.pause(); f.resumeLater = false; setBtn(false); } else { f.play(); setBtn(true); } };
-    $$('[data-sp]', sh).forEach(b => b.onclick = () => { sp = +b.dataset.sp; f.speed = sp * settings.speed; f.t0 = null; $$('[data-sp]', sh).forEach(o => o.setAttribute('aria-pressed', o === b)); });
+    $$('[data-sp]', sh).forEach(b => b.onclick = () => { sp = +b.dataset.sp; f.speed = sp === 1 ? settings.speed : 0.5; f.t0 = null; $$('[data-sp]', sh).forEach(o => o.setAttribute('aria-pressed', o === b)); });
     sh._close = () => { stopFigs(sh); sh.remove(); closeLayer(sh); };
     $('[data-close]', sh).onclick = goBack;
     $('[data-one]', sh).onclick = () => startSession({ title: x.name, items: [{ id, dose: x.dose }] });
@@ -285,7 +286,7 @@
         sides.forEach((side, si) => {
           const holdKey = d.setKeys ? d.setKeys[s - 1] : (mv.holdKeys ? mv.holdKeys[si] : 1);
           const readyKey = d.setKeys ? d.setKeys[s - 1] : 0;
-          const base = { ei, id: it.id, set: s, sets: d.sets, side, label, doseText, holdKey, readyKey };
+          const base = { ei, id: it.id, set: s, sets: d.sets, side, si, label, doseText, holdKey, readyKey };
           if (d.hold && reps) steps.push(Object.assign({ kind: 'repHold', reps, hold: d.hold, relax: d.relax || 3 }, base));
           else if (d.hold) steps.push(Object.assign({ kind: 'hold', hold: d.hold }, base));
           else steps.push(Object.assign({ kind: 'reps', reps, repsText: d.repsText }, base));
@@ -346,7 +347,7 @@
     if (delta < 0) { const st = S.steps[S.i]; if (st.id && st.kind !== 'next') S.skipped.delete(st.id); }
     renderStep();
   }
-  function skipExercise() { if (!S) return; clearTimeout(S.adv); const ei = S.steps[S.i].ei; S.skipped.add(S.sess.items[ei].id); let j = S.i; while (j < S.steps.length - 1 && S.steps[j].ei === ei && S.steps[j].kind !== 'next') j++; if (S.steps[j].kind === 'next') j++; clearInterval(S.timer); S.i = j; renderStep(); }
+  function skipExercise() { if (!S) return; clearTimeout(S.adv); const ei = S.steps[S.i].ei; S.skipped.add(S.sess.items[ei].id); let j = S.i; while (j < S.steps.length - 1 && S.steps[j].ei === ei && S.steps[j].kind !== 'next') j++; clearInterval(S.timer); S.i = j; renderStep(); }
 
   function renderStep(first) {
     clearTimeout(S.adv);
@@ -367,6 +368,7 @@
     const x = C.ex[st.id];
     const pct = Math.round((st.ei / total) * 100);
     const top = `<div class="row ptop"><button class="iconbtn" data-x aria-label="יציאה מהאימון">${ICON.close}</button><div class="grow"><div class="prog"><i style="width:${pct}%"></i></div></div><span class="chip">${st.ei + 1}/${total}</span></div>`;
+    if (st.kind === 'switch' && S.fig && 'mirror' in S.fig) { S.fig.mirror = !S.fig.mirror; }
     if (st.kind === 'next') {
       stopFigs(pl); S.figId = null;
       const nx = C.ex[st.id];
@@ -392,11 +394,12 @@
       $('[data-x]', pl).focus();
     } else { $('.prog i', pl).style.width = pct + '%'; $('.ptop .chip', pl).textContent = (st.ei + 1) + '/' + total; }
     const fig = S.fig, body = $('.pbody', pl);
+    if (st.si !== undefined && fig.mirror !== !!st.si && 'mirror' in fig) { fig.mirror = !!st.si; if (!fig.playing) fig.render(); }
     const dots = st.sets > 1 ? `<div class="dots" aria-label="סט ${st.set} מתוך ${st.sets}">${Array.from({ length: st.sets }, (_, k) => `<span class="${k < st.set - 1 ? 'on' : k === st.set - 1 ? 'now' : ''}"></span>`).join('')}</div>` : '';
     const head = `<div class="row"><h2 class="grow">${esc(x.name)}</h2>${dots}</div>`;
     const tag = [st.label, st.side].filter(Boolean).join(' · ');
     const nav = `<div class="row between"><button class="btn ghost small" data-prev ${S.i === 0 ? 'disabled' : ''}>הקודם</button><button class="btn ghost small" data-skip>כואב? דלג</button></div>`;
-    const watch = `<p class="watch small">${esc(x.watch)}</p>`;
+    const watch = `<p class="watch small">${esc(x.watch)}<br><span class="stopline">${esc(C.stopLine)}</span></p>`;
     const bind = () => { const p = $('[data-prev]', body); if (p) p.onclick = () => go(-1); const s = $('[data-skip]', body); if (s) s.onclick = skipExercise; };
 
     if (st.kind === 'reps') {
@@ -441,7 +444,7 @@
       const label = st.kind === 'rest' ? 'מנוחה' : 'מחליפים צד';
       body.innerHTML = `${head}<div class="ring rest"><div><div class="big" id="tv">${st.secs}</div><div class="ring-sub">${label}</div></div></div>
         ${st.next ? `<div class="phase">הבא: ${esc(st.next)}</div>` : ''}
-        <div class="row center"><button class="btn ghost" data-plus>+15</button><button class="btn" data-ok>דלג</button></div>${nav}`;
+        <div class="row center"><button class="btn ghost" data-plus>+15</button><button class="btn" data-ok>המשך</button></div>${nav}`;
       bind(); speak(label + (st.next ? '. ' + st.next : ''));
       let secs = st.secs; const ring = $('.ring', body), tv = $('#tv', body);
       const run = () => countdown(secs, (l, p) => { tv.textContent = l; ring.style.setProperty('--p', p); }, () => { beep(880, .2, 2); go(1); });
