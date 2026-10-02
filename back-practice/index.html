@@ -74,6 +74,7 @@ ol.steps{margin:0;padding-inline-start:20px}
   <nav role="tablist">
     <button role="tab" data-tab="session" aria-selected="true">אימון מודרך</button>
     <button role="tab" data-tab="home" aria-selected="false">תוכנית בבית</button>
+    <button role="tab" data-tab="before" aria-selected="false">לפני היציאה</button>
     <button role="tab" data-tab="trail" aria-selected="false">בשביל</button>
     <button role="tab" data-tab="log" aria-selected="false">יומן</button>
     <button role="tab" data-tab="safety" aria-selected="false">חשוב לדעת</button>
@@ -92,8 +93,43 @@ ol.steps{margin:0;padding-inline-start:20px}
     <div class="list" id="homeList" style="margin-top:12px"></div>
   </section>
 
+  <!-- BEFORE -->
+  <section id="tab-before" hidden>
+    <h2>החשש העיקרי</h2>
+    <p>20–25 ק"מ ביום עם תיק, במשך שלושה חודשים, זה בדיוק סוג העומס החוזר שגורם לשבר מאמץ בשוקה. הטיפול בשבר כזה מבוסס על הפסקת העומס הזה. אם השברים לא החלימו, השביל עלול להחמיר אותם ולקטוע את המסע באמצע.</p>
+
+    <h2>שאלות לרופא לפני היציאה</h2>
+    <p class="sub">כדאי לנסות להגיע למרפאת רפואת ספורט השבוע, או לפחות לדבר עם הרופא. סמן כשקיבלת תשובה.</p>
+    <div class="list" id="docChecks" style="margin-top:10px"></div>
+    <div class="note" style="margin-top:10px">אם התשובה לשאלה הראשונה היא לא, עדיף לדחות בכמה שבועות מאשר לעצור באמצע.</div>
+
+    <h2>השוקיים: מה זה אומר על האימונים</h2>
+    <div class="list">
+      <div class="note"><b>מה מפסיקים:</b> פעילות בעומס גבוה על הרגליים: ריצה, קפיצות, שינויי כיוון וסיבובים. זה כולל גם מסעות.</div>
+      <div class="note"><b>כדי לשמור על כושר:</b> שחייה, אופניים ואימון פלג גוף עליון.</div>
+      <div class="note"><b>משך ההחלמה:</b> בשבר מאמץ ההחלמה לוקחת בדרך כלל 6 עד 12 שבועות. אצל חיילים בריטיים, החזרה לאימונים אחרי שבר מאמץ בשוקה או בירך לקחה בממוצע כ-21 שבועות.</div>
+      <div class="note"><b>למה לברר את הסיבה:</b> שברי מאמץ בשוקה נוטים לחזור. הטיפול כולל גם זיהוי ותיקון של גורמי סיכון תזונתיים, מטבוליים וביומכניים.</div>
+    </div>
+
+    <h2>אם יוצאים, כך מורידים את הסיכון</h2>
+    <div class="list">
+      <div class="note"><b>שבוע ראשון:</b> מרחקים קצרים בהרבה מהיעד, ותיק קל ככל האפשר. מגדילים בהדרגה: הנחיות לחזרה אחרי פציעה ממליצות להעלות עומס בכ-10% בשבוע ולשלב 1–2 ימי מנוחה בשבוע. זה כתוב לגבי ריצה, אבל העיקרון רלוונטי גם להליכה.</div>
+      <div class="note"><b>מקלות הליכה:</b> מורידים חלק מהעומס מהברכיים ומהרגליים.</div>
+      <div class="note"><b>התיק:</b> רוב המשקל צריך לשבת על חגורת המותניים ולא על הכתפיים. זה חשוב לצוואר.</div>
+    </div>
+    <h3 style="margin-top:14px">מחשבון עלייה של 10% בשבוע</h3>
+    <label class="sub" for="startKm">מרחק יומי בשבוע הראשון (ק"מ):</label>
+    <input id="startKm" type="number" min="1" max="40" step="1" value="8" style="font:inherit;width:90px;padding:6px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--fg)">
+    <div id="kmTable" class="days" style="grid-template-columns:repeat(4,1fr);margin-top:10px"></div>
+    <p class="sub" style="margin-top:6px">החישוב רק מראה מה עלייה של 10% בשבוע אומרת במספרים. את מרחק ההתחלה צריך לקבוע עם הרופא.</p>
+  </section>
+
   <!-- TRAIL -->
   <section id="tab-trail" hidden>
+    <div class="warnbox">
+      <b>לעצור ולהגיע לבדיקה אם:</b>
+      <ul><li>יש כאב נקודתי בשוקה שמחמיר</li><li>יש כאב גם במנוחה או בלילה</li><li>אתה מתחיל לצלוע</li></ul>
+    </div>
     <h2>בשביל</h2>
     <p class="sub">בלי ציוד, לא צריך גומייה.</p>
     <div class="list" id="trailList" style="margin-top:12px"></div>
@@ -122,6 +158,20 @@ ol.steps{margin:0;padding-inline-start:20px}
         <li>הדף לא מחליף את התשובה מהרופא: האם השברים בשוקיים החלימו לפני השביל.</li>
         <li>אלה תרגילים סטנדרטיים שמתאימים לרוב האנשים. פיזיותרפיסט שבודק אותך יכול להתאים אותם טוב יותר.</li>
       </ul>
+    </div>
+    <h2>ללכת למיון אם</h2>
+    <div class="warnbox">
+      <ul style="margin:0">
+        <li>יש חוסר תחושה במפשעה</li>
+        <li>יש בעיה בשליטה על שתן או צואה</li>
+        <li>יש חולשה מתגברת ברגליים</li>
+      </ul>
+    </div>
+    <h2>הגב והצוואר</h2>
+    <div class="list">
+      <div class="note">כאב הגב והצוואר הוא כנראה בעיה נפרדת מהשוקיים, והסיבה שלו לא ידועה. בלט אפשר לאשר או לשלול רק ב-MRI.</div>
+      <div class="note">התרגילים בתוכנית עדיין מתאימים, ורובם בשכיבה, כך שהם לא מעמיסים על השוקיים. בגלל שהשברים לא בגב, גם תנועות עדינות של הקשתה לאחור מותרות, כל עוד הן לא מגבירות את הכאב.</div>
+      <div class="note"><b>שאלה לעצמך:</b> האם הכאב בגב או בצוואר קורן לרגל או ליד, או מלווה בנימול? אם כן, זו סיבה טובה לבקש MRI.</div>
     </div>
     <h2>מה לא אומת מול מקור</h2>
     <div class="list">
@@ -199,6 +249,27 @@ function exDetails(e){
 $('#homeList').innerHTML = HOME.map(exDetails).join('');
 $('#trailList').innerHTML = TRAIL.map(t=>`<details class="ex" open><summary><h3>${t.name}</h3><span class="dose">${t.dose}</span></summary>
   <div class="body"><ul class="steps" style="margin:0;padding-inline-start:20px">${t.items.map(i=>`<li>${i}</li>`).join('')}</ul></div></details>`).join('');
+
+/* before-trip: doctor questions + 10% calculator */
+const DOCQ = [
+  ['q1','"האם השברים החלימו, ומותר לי ללכת 20–25 ק"מ ביום עם תיק?"'],
+  ['q2','האם השבר בצד הקדמי של השוקה? שברים בקורטקס הקדמי נחשבים בסיכון גבוה, ויש דרגות שבהן ממליצים להימנע מפעילות בעומס גבוה 4 עד 6 חודשים.'],
+  ['q3','האם לבדוק ויטמין D וסידן?'],
+  ['q4','האם מתאימה לי בדיקת צפיפות עצם (DEXA)?'],
+  ['q5','אם הכאב בגב או בצוואר קורן לרגל או ליד, או מלווה בנימול: האם כדאי MRI?']
+];
+function renderDoc(){
+  const done=store.get('docq',{});
+  $('#docChecks').innerHTML=DOCQ.map(([id,q])=>`<label class="check" for="d_${id}"><input type="checkbox" id="d_${id}" data-k="${id}" ${done[id]?'checked':''}><span>${q}</span></label>`).join('');
+  $('#docChecks').querySelectorAll('input').forEach(i=>i.onchange=()=>{const d=store.get('docq',{});d[i.dataset.k]=i.checked;store.set('docq',d)});
+}
+function renderKm(){
+  const s=Math.max(1,Math.min(40,+$('#startKm').value||1)); let html='';
+  for(let w=0;w<12;w++){const km=s*Math.pow(1.1,w);html+=`<div class="day">שבוע ${w+1}<b>${km.toFixed(1)}</b></div>`}
+  $('#kmTable').innerHTML=html;
+}
+$('#startKm').oninput=renderKm;
+renderDoc(); renderKm();
 
 /* guided session */
 let idx=0, setNo=0, timer=null, remaining=0, mode=null, restLen=store.get('rest',45);
