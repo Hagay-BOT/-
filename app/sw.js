@@ -3,10 +3,10 @@
    - fetch: cache-first (query string ignored); the network is used only for files missing from the cache.
      Updates arrive as a whole new VERSION, so files from two versions never mix
    - activate: drop old caches and tell open pages an update is ready */
-const VERSION = 'v5';
+const VERSION = 'v6';
 const CACHE = 'gav-hazak-' + VERSION;
 const ASSETS = [
-  './', 'index.html', 'app.css', 'app.js', 'anim.js', 'moves.js', 'fig3d.js', 'lib/three.min.js', 'content.js', 'manifest.webmanifest',
+  './', 'index.html', 'app.css', 'app.js', 'anim.js', 'moves.js', 'pict.js', 'content.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
   'fonts/rubik-hebrew-500-normal.woff2', 'fonts/rubik-latin-500-normal.woff2', 'fonts/rubik-hebrew-700-normal.woff2', 'fonts/rubik-latin-700-normal.woff2',
   'fonts/assistant-hebrew-400-normal.woff2', 'fonts/assistant-latin-400-normal.woff2', 'fonts/assistant-hebrew-700-normal.woff2', 'fonts/assistant-latin-700-normal.woff2'
