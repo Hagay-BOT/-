@@ -1,0 +1,280 @@
+<title>גב חזק – תרגול</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700&family=Assistant:wght@400;600&display=swap">
+<style>
+/* Layout: one narrow column for the phone; sticky tab bar, guided session as a single focused card */
+:root{
+  --bg:#eef2ef; --surface:#ffffff; --surface2:#e2e9e4; --fg:#18231d; --muted:#5b6b62;
+  --accent:#2f7d5b; --accent-fg:#ffffff; --warn:#b5541c; --warn-bg:#fbeee5; --line:#cfd9d2;
+  --display:'Rubik',system-ui,sans-serif; --body:'Assistant',system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#101613; --surface:#18211c; --surface2:#212c26; --fg:#e4ece7; --muted:#93a59a;
+  --accent:#5cbf91; --accent-fg:#0d1a13; --warn:#f0a070; --warn-bg:#2e2018; --line:#2c3a32; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#101613; --surface:#18211c; --surface2:#212c26; --fg:#e4ece7; --muted:#93a59a;
+  --accent:#5cbf91; --accent-fg:#0d1a13; --warn:#f0a070; --warn-bg:#2e2018; --line:#2c3a32; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.55;direction:rtl;margin:0}
+.wrap{max-width:560px;margin:0 auto;padding-inline:16px;padding-block:12px 48px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-size:1.6rem;font-weight:700}
+h2{font-size:1.2rem;font-weight:700;margin-block:20px 10px}
+h3{font-size:1.05rem;font-weight:500}
+p{margin:0}
+.sub{color:var(--muted);font-size:.95rem}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;gap:6px;padding-block:10px;overflow-x:auto}
+nav button{flex:1 0 auto;font:500 .95rem var(--display);padding:9px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+nav button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+button:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.list{display:flex;flex-direction:column;gap:10px}
+details.ex{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+details.ex summary{list-style:none;cursor:pointer;padding:14px;display:flex;gap:12px;align-items:center}
+details.ex summary::-webkit-details-marker{display:none}
+.dose{margin-inline-start:auto;font:500 .9rem var(--display);background:var(--surface2);padding:4px 10px;border-radius:8px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.ex .body{padding:0 14px 14px;display:flex;flex-direction:column;gap:10px}
+.lbl{font:500 .8rem var(--display);color:var(--muted);letter-spacing:.03em}
+ol.steps{margin:0;padding-inline-start:20px}
+.mistake{background:var(--warn-bg);color:var(--fg);border-inline-start:4px solid var(--warn);padding:8px 12px;border-radius:6px}
+.why{color:var(--muted)}
+.note{background:var(--surface2);border-radius:10px;padding:10px 12px;font-size:.92rem}
+.warnbox{background:var(--warn-bg);border-radius:12px;padding:12px 14px}
+.warnbox ul{margin:6px 0 0;padding-inline-start:20px}
+.btn{font:500 1rem var(--display);padding:12px 18px;border-radius:12px;border:none;background:var(--accent);color:var(--accent-fg);cursor:pointer}
+.btn.ghost{background:var(--surface2);color:var(--fg)}
+.btn:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+/* session */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.prog{height:6px;background:var(--surface2);border-radius:99px;overflow:hidden}
+.prog i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.big{font:700 3.2rem var(--display);font-variant-numeric:tabular-nums;text-align:center;line-height:1}
+.setdots{display:flex;gap:8px;justify-content:center}
+.setdots span{width:14px;height:14px;border-radius:50%;border:2px solid var(--accent)}
+.setdots span.on{background:var(--accent)}
+.timerlbl{text-align:center;color:var(--muted);font:500 .9rem var(--display)}
+/* log */
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 2px;text-align:center;font-size:.8rem;min-width:0}
+.day b{display:block;font:500 1rem var(--display);font-variant-numeric:tabular-nums}
+.day.done{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.day.today{outline:2px solid var(--fg);outline-offset:1px}
+.stat{font:700 1.4rem var(--display);font-variant-numeric:tabular-nums}
+.check{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;cursor:pointer}
+.check input{width:22px;height:22px;accent-color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.prog i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>גב חזק לשביל</h1>
+    <p class="sub">תרגול עצמי לפי הפרוטוקול מהשיחה בפרויקט "מאמן"</p>
+  </header>
+
+  <nav role="tablist">
+    <button role="tab" data-tab="session" aria-selected="true">אימון מודרך</button>
+    <button role="tab" data-tab="home" aria-selected="false">תוכנית בבית</button>
+    <button role="tab" data-tab="trail" aria-selected="false">בשביל</button>
+    <button role="tab" data-tab="log" aria-selected="false">יומן</button>
+    <button role="tab" data-tab="safety" aria-selected="false">חשוב לדעת</button>
+  </nav>
+
+  <!-- SESSION -->
+  <section id="tab-session">
+    <div class="note" id="sessIntro">כ-20 דקות. השבוע המטרה היא ללמוד את התנועות נכון, לא לבנות כוח. אם תרגיל מכאיב, מדלגים עליו.</div>
+    <div class="card" id="sess" style="margin-top:12px"></div>
+  </section>
+
+  <!-- HOME -->
+  <section id="tab-home" hidden>
+    <h2>פרוטוקול בבית</h2>
+    <p class="sub">תרגילי חיזוק 3–4 פעמים בשבוע, עם יום מנוחה ביניהם. את המתיחות אפשר לעשות כל יום.</p>
+    <div class="list" id="homeList" style="margin-top:12px"></div>
+  </section>
+
+  <!-- TRAIL -->
+  <section id="tab-trail" hidden>
+    <h2>בשביל</h2>
+    <p class="sub">בלי ציוד, לא צריך גומייה.</p>
+    <div class="list" id="trailList" style="margin-top:12px"></div>
+  </section>
+
+  <!-- LOG -->
+  <section id="tab-log" hidden>
+    <h2>היום</h2>
+    <div class="list" id="todayChecks"></div>
+    <h2>14 הימים האחרונים</h2>
+    <p class="sub">ימים מסומנים = אימון בבית הושלם</p>
+    <div class="days" id="days" style="margin-top:10px"></div>
+    <div class="row" style="margin-top:16px;align-items:baseline;gap:6px">
+      <span class="stat" id="weekCount">0</span><span class="sub">אימוני בית ב-7 הימים האחרונים (היעד: 3–4)</span>
+    </div>
+    <p class="sub" style="margin-top:12px">היומן נשמר רק בדפדפן הזה, בטלפון הזה.</p>
+  </section>
+
+  <!-- SAFETY -->
+  <section id="tab-safety" hidden>
+    <h2>סימני אזהרה</h2>
+    <div class="warnbox">
+      <p>לא נכללו בתוכנית קפיצות, ריצה או סקוואטים עמוקים, בגלל השוקיים והברכיים.</p>
+      <ul>
+        <li>אם תרגיל מכאיב, מדלגים עליו.</li>
+        <li>הדף לא מחליף את התשובה מהרופא: האם השברים בשוקיים החלימו לפני השביל.</li>
+        <li>אלה תרגילים סטנדרטיים שמתאימים לרוב האנשים. פיזיותרפיסט שבודק אותך יכול להתאים אותם טוב יותר.</li>
+      </ul>
+    </div>
+    <h2>מה לא אומת מול מקור</h2>
+    <div class="list">
+      <div class="note"><b>פלאנק צידי:</b> לא נמצא מקור עם זמן החזקה מומלץ למתחילים. 10–20 שניות הן נקודת התחלה.</div>
+      <div class="note"><b>Bird-dog:</b> לא נמצא מספר מבוסס לזמן ההחזקה, לכן כתוב "החזקה קצרה".</div>
+      <div class="note"><b>הסברי הביצוע והטעויות בדף הזה</b> הם תיאור כללי של התרגילים ולא נבדקו מול מקור בשיחה. המספרים (סטים, חזרות, תדירות) לקוחים מהשיחה.</div>
+    </div>
+  </section>
+</div>
+
+<script>
+const HOME = [
+  {id:'chin', name:'הכנסת סנטר בשכיבה', sets:1, reps:10, hold:5, unit:'חזרות', dose:'10 × החזקה 5 שנ׳',
+   why:'מחזק את שרירי הצוואר העמוקים.',
+   steps:['שוכבים על הגב, ברכיים כפופות.','מושכים את הסנטר פנימה ("סנטר כפול") בלי להרים את הראש.','מחזיקים 5 שניות ומשחררים.'],
+   mistake:'להרים את הראש מהרצפה או לדחוף את הלסת קדימה.'},
+  {id:'row', name:'חתירה עם גומייה', sets:3, reps:12, unit:'חזרות', dose:'3 × 12',
+   why:'מחזק את הגב העליון והשכמות.',
+   steps:['הגומייה מקובעת בגובה החזה, עומדים זקוף.','מושכים את המרפקים לאחור, צמוד לגוף.','מקרבים את השכמות בסוף התנועה וחוזרים לאט.'],
+   mistake:'להרים כתפיים לכיוון האוזניים.'},
+  {id:'deadbug', name:'Dead bug', sets:3, reps:8, perSide:true, unit:'לכל צד', dose:'3 × 8 לכל צד',
+   why:'מחזק את שרירי הבטן העמוקים.',
+   steps:['שוכבים על הגב, ידיים למעלה, ברכיים ב-90 מעלות.','מורידים לאט יד ורגל נגדיות.','חוזרים ומחליפים צד. הגב התחתון צמוד לרצפה כל הזמן.'],
+   mistake:'הגב התחתון מתרומם ומתקמר מהרצפה.'},
+  {id:'birddog', name:'Bird-dog', sets:3, reps:8, perSide:true, unit:'לכל צד', dose:'3 × 8 לכל צד',
+   why:'יציבות של הגב והאגן.',
+   steps:['עומדים על שש: ידיים מתחת לכתפיים, ברכיים מתחת לאגן.','מושיטים יד ורגל נגדיות עד קו ישר.','החזקה קצרה וחוזרים.'],
+   mistake:'לסובב את האגן או להקשית את הגב.'},
+  {id:'sideplank', name:'פלאנק צידי על הברכיים', sets:3, hold:15, perSide:true, unit:'שניות לכל צד', dose:'3 × 10–20 שנ׳ לכל צד',
+   why:'מחזק את שרירי הצד של הגו.',
+   steps:['שוכבים על הצד, מרפק מתחת לכתף, ברכיים כפופות.','מרימים את האגן עד קו ישר מהראש לברכיים.','מחזיקים 10–20 שניות ומחליפים צד.'],
+   mistake:'לתת לאגן לצנוח או לנטות לאחור.'},
+  {id:'bridge', name:'גשר ישבן', sets:3, reps:12, unit:'חזרות', dose:'3 × 12',
+   why:'מחזק את הישבן, השרירים שסוחבים את התיק בעליות.',
+   steps:['שוכבים על הגב, ברכיים כפופות, כפות רגליים על הרצפה.','מכווצים את הישבן ומרימים את האגן עד קו ישר מהכתפיים לברכיים.','יורדים לאט.'],
+   mistake:'להקשית את הגב התחתון בשיא התנועה.'},
+  {id:'clam', name:'Clamshell (שכיבה על הצד)', sets:3, reps:15, unit:'חזרות', dose:'3 × 15',
+   why:'מחזק את הירך מהצד ועוזר ליציבות הברך.',
+   steps:['שוכבים על הצד, ברכיים כפופות, עקבים צמודים.','פותחים את הברך העליונה כמו צדפה.','האגן לא מתגלגל לאחור.'],
+   mistake:'לגלגל את האגן אחורה כדי לפתוח יותר.'},
+  {id:'stretch', name:'מתיחות: כופפי ירך ושרירים אחוריים של הירך', sets:2, hold:30, perSide:true, unit:'שניות לכל צד', dose:'2 × 30 שנ׳ לכל צד',
+   why:'מתיחת כופפי ירך בגרסה בעמידה, לא על הברך, בגלל הברכיים.',
+   steps:['כופפי ירך: בעמידה, רגל אחת מאחור, דוחפים את האגן קדימה בעדינות.','שרירים אחוריים של הירך: מתיחה רכה בלי כאב.','מחזיקים 30 שניות לכל צד.'],
+   mistake:'למתוח עד כאב או לעשות את מתיחת כופפי הירך על הברך.'}
+];
+
+const TRAIL = [
+  {id:'t_am', name:'בבוקר', dose:'5 דקות', items:['חתול-פרה, 10 חזרות','הכנסת סנטר, 10 חזרות','גשר ישבן, 10 חזרות']},
+  {id:'t_pm', name:'בערב', dose:'10 דקות', items:['Dead bug, סט אחד','Bird-dog, סט אחד','פלאנק צידי, סט אחד','מתיחות: כופפי ירך, שרירים אחוריים של הירך, שוקיים']},
+  {id:'t_break', name:'בהפסקות', dose:'בכל עצירה', items:['להוריד את התיק','גלגולי כתפיים','הכנסת סנטר']}
+];
+
+const $ = s => document.querySelector(s);
+const store = {
+  get(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch(e){return d}},
+  set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+};
+const todayKey = (d=new Date()) => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+
+/* tabs */
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('nav button').forEach(x=>x.setAttribute('aria-selected',x===b));
+  document.querySelectorAll('section[id^=tab-]').forEach(s=>s.hidden = s.id!=='tab-'+b.dataset.tab);
+  if(b.dataset.tab==='log') renderLog();
+  store.set('tab',b.dataset.tab);
+}));
+
+/* exercise lists */
+function exDetails(e){
+  return `<details class="ex"><summary><h3>${e.name}</h3><span class="dose">${e.dose}</span></summary>
+  <div class="body"><p class="why">${e.why}</p>
+  <div><div class="lbl">איך עושים</div><ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>
+  <div class="mistake"><div class="lbl">טעות נפוצה</div>${e.mistake}</div></div></details>`;
+}
+$('#homeList').innerHTML = HOME.map(exDetails).join('');
+$('#trailList').innerHTML = TRAIL.map(t=>`<details class="ex" open><summary><h3>${t.name}</h3><span class="dose">${t.dose}</span></summary>
+  <div class="body"><ul class="steps" style="margin:0;padding-inline-start:20px">${t.items.map(i=>`<li>${i}</li>`).join('')}</ul></div></details>`).join('');
+
+/* guided session */
+let idx=0, setNo=0, timer=null, remaining=0, mode=null, restLen=store.get('rest',45);
+let skipped = new Set();
+function stopTimer(){clearInterval(timer);timer=null;mode=null}
+function beep(){try{const c=new (window.AudioContext||window.webkitAudioContext)();const o=c.createOscillator();o.frequency.value=880;o.connect(c.destination);o.start();o.stop(c.currentTime+.25)}catch(e){}}
+function startTimer(sec,m){stopTimer();remaining=sec;mode=m;tick();timer=setInterval(()=>{remaining--;if(remaining<=0){stopTimer();beep();if(navigator.vibrate)navigator.vibrate(200);renderSess();return}tick()},1000);renderSess()}
+function tick(){const el=$('#tval');if(el)el.textContent=remaining}
+
+function renderSess(){
+  const box=$('#sess');
+  if(idx>=HOME.length){
+    stopTimer();
+    const done=HOME.length-skipped.size;
+    box.innerHTML=`<h2 style="margin:0">סיימת את האימון</h2>
+      <p>${done} מתוך ${HOME.length} תרגילים${skipped.size?`, דילגת על ${skipped.size}`:''}.</p>
+      <div class="row"><button class="btn" id="saveDone">שמור ביומן</button><button class="btn ghost" id="again">מההתחלה</button></div>`;
+    $('#saveDone').onclick=()=>{const log=store.get('log',{});const k=todayKey();log[k]={...(log[k]||{}),home:true};store.set('log',log);$('#saveDone').textContent='נשמר ביומן';$('#saveDone').disabled=true};
+    $('#again').onclick=()=>{idx=0;setNo=0;skipped=new Set();renderSess()};
+    return;
+  }
+  const e=HOME[idx];
+  const isHold = e.hold && !e.reps;
+  const holdPerRep = e.hold && e.reps;
+  const dots=Array.from({length:e.sets},(_,i)=>`<span class="${i<setNo?'on':''}"></span>`).join('');
+  let main;
+  if(mode==='rest'){
+    main=`<div class="timerlbl">מנוחה</div><div class="big" id="tval">${remaining}</div>
+      <button class="btn ghost" id="skipRest">דלג על המנוחה</button>`;
+  } else if(mode==='hold'){
+    main=`<div class="timerlbl">מחזיקים${e.perSide?' (צד אחד)':''}</div><div class="big" id="tval">${remaining}</div>
+      <button class="btn ghost" id="stopHold">עצור</button>`;
+  } else {
+    const target = isHold ? `${e.hold} שניות${e.perSide?' לכל צד':''}` : `${e.reps} ${e.unit}`;
+    main=`<div class="big">${target.split(' ')[0]}</div><div class="timerlbl">${target.split(' ').slice(1).join(' ')}</div>
+      <div class="row" style="justify-content:center">
+      ${(isHold||holdPerRep)?`<button class="btn ghost" id="holdBtn">טיימר החזקה ${e.hold} שנ׳</button>`:''}
+      <button class="btn" id="setDone">סיימתי סט</button></div>`;
+  }
+  box.innerHTML=`
+    <div class="prog"><i style="width:${(idx/HOME.length)*100}%"></i></div>
+    <div class="row" style="justify-content:space-between;align-items:baseline">
+      <span class="lbl">תרגיל ${idx+1} מתוך ${HOME.length}</span><span class="dose">${e.dose}</span></div>
+    <h2 style="margin:0">${e.name}</h2>
+    <div class="setdots" aria-label="סט ${Math.min(setNo+1,e.sets)} מתוך ${e.sets}">${dots}</div>
+    ${main}
+    <details class="ex" style="background:var(--surface2);border:none"><summary><span class="lbl">איך עושים · טעות נפוצה</span></summary>
+      <div class="body"><ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol><div class="mistake">${e.mistake}</div></div></details>
+    <div class="row" style="justify-content:space-between">
+      <button class="btn ghost" id="prev" ${idx===0?'disabled':''}>הקודם</button>
+      <button class="btn ghost" id="skip">מכאיב, דלג</button>
+    </div>
+    <label class="sub" for="restSel">זמן מנוחה בין סטים (בחירה שלך):
+      <select id="restSel">${[30,45,60,90].map(v=>`<option ${v===restLen?'selected':''}>${v}</option>`).join('')}</select> שנ׳</label>`;
+  const on=(id,f)=>{const el=$('#'+id);if(el)el.onclick=f};
+  on('setDone',()=>{setNo++; if(setNo>=e.sets){next()} else startTimer(restLen,'rest')});
+  on('holdBtn',()=>startTimer(e.hold,'hold'));
+  on('stopHold',()=>{stopTimer();renderSess()});
+  on('skipRest',()=>{stopTimer();renderSess()});
+  on('skip',()=>{skipped.add(e.id);next()});
+  on('prev',()=>{stopTimer();idx--;setNo=0;skipped.delete(HOME[idx].id);renderSess()});
+  $('#restSel').onchange=ev=>{restLen=+ev.target.value;store.set('rest',restLen)};
+}
+function next(){stopTimer();idx++;setNo=0;renderSess()}
+renderSess();
+
+/* log */
+function renderLog(){
+  const log=store.get('log',{}); const k=todayKey(); const t=log[k]||{};
+  const items=[['home','אימון בבית'],['t_am','שביל: בוקר'],['t_pm','שביל: ערב'],['stretch','מתיחות']];
+  $('#todayChecks').innerHTML=items.map(([id,l])=>`<label class="check" for="c_${id}"><input type="checkbox" id="c_${id}" data-k="${id}" ${t[id]?'checked':''}>${l}</label>`).join('');
+  $('#todayChecks').querySelectorAll('input').forEach(i=>i.onchange=()=>{const lg=store.get('log',{});lg[k]={...(lg[k]||{}),[i.dataset.k]:i.checked};store.set('log',lg);renderLog()});
+  const names=['א','ב','ג','ד','ה','ו','ש']; let html='',week=0;
+  for(let i=13;i>=0;i--){const d=new Date();d.setDate(d.getDate()-i);const dk=todayKey(d);const done=log[dk]&&log[dk].home;if(i<7&&done)week++;
+    html+=`<div class="day ${done?'done':''} ${i===0?'today':''}">${names[d.getDay()]}<b>${d.getDate()}</b></div>`}
+  $('#days').innerHTML=html; $('#weekCount').textContent=week;
+}
+const savedTab=store.get('tab','session'); const tb=document.querySelector(`nav button[data-tab="${savedTab}"]`); if(tb&&savedTab!=='session')tb.click();
+</script>
