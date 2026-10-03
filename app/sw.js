@@ -3,7 +3,7 @@
    - fetch: cache-first (query string ignored); the network is used only for files missing from the cache.
      Updates arrive as a whole new VERSION, so files from two versions never mix
    - activate: drop old caches and tell open pages an update is ready */
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = 'gav-hazak-' + VERSION;
 const ASSETS = [
   './', 'index.html', 'app.css', 'app.js', 'anim.js', 'moves.js', 'pict.js', 'content.js', 'manifest.webmanifest',

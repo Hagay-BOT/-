@@ -110,6 +110,7 @@
       sources: [S.mayoRow, S.aceRow, S.aceCues, S.jospt17]
     },
     deadbug: {
+      video: ['https://www.acefitness.org/resources/everyone/exercise-library/147/supine-dead-bug/', 'ACE', 'photos'],
       goal: "בטן עמוקה", s3: ["על הגב: ידיים למעלה, ברכיים ב-90°", "מרחיקים לאט יד ורגל נגדיות", "חוזרים ומחליפים צד"], watch: "הגב התחתון יציב: לא מתקמר ולא נדחס לרצפה.",
       name: 'Dead bug (חרק על הגב)', en: 'Dead bug', move: 'deadbug',
       dose: { sets: 3, reps: 16, repsText: '8 לכל צד, לסירוגין' }, doseText: '3 × 8 לכל צד, לסירוגין',
@@ -124,6 +125,7 @@
       sources: [S.harvardDB, S.aceDB, S.nasmDB]
     },
     birddog: {
+      video: ['https://www.mayoclinic.org/connected-care/build-core-strength-as-you-balance-in-bird-dog/vid-20307388', 'Mayo Clinic', 'video'],
       goal: "יציבות הגב והאגן", s3: ["עמידת שש, גב ישר", "מושיטים יד ורגל נגדיות לקו ישר", "מחזיקים 8 שניות ומחליפים"], watch: "האגן לא מסתובב. ריפוד מתחת לברכיים.",
       name: 'Bird-dog (ציפור-כלב)', en: 'Bird-dog (McGill big 3)', move: 'birddog',
       dose: { sets: 3, repsBySet: [5, 3, 1], hold: 8, relax: 3, perSide: true, sideLabels: ['יד שמאל ורגל ימין', 'יד ימין ורגל שמאל'] }, doseText: 'פירמידה 5 / 3 / 1 לכל צד, החזקה 8 שנ׳',
@@ -138,6 +140,7 @@
       sources: [S.harvardBD, S.aceBD, S.mcgill, S.harvard3]
     },
     sideplank: {
+      video: ['https://www.acefitness.org/resources/everyone/exercise-library/100/side-plank-modified/', 'ACE', 'photos'],
       goal: "צד הגו", s3: ["על הצד, ברכיים כפופות, מרפק מתחת לכתף", "מרימים אגן: קו ישר מהראש לברכיים", "מחזיקים ונושמים"], watch: "האגן לא צונח. נושמים. ריפוד מתחת לברך.",
       name: 'פלאנק צידי על הברכיים', en: 'Modified side plank', move: 'sideplank',
       dose: { sets: 3, hold: 10, perSide: true, sideLabels: ['שוכבים על צד ימין', 'שוכבים על צד שמאל'] }, doseText: '3 × 10 שנ׳ לכל צד',
@@ -152,6 +155,7 @@
       sources: [S.aceSP, S.nasmSP, S.mcgill]
     },
     bridge: {
+      video: ['https://www.youtube.com/watch?v=9M1QN6MRXPQ', 'NHS South Tees', 'video'],
       goal: "ישבן", s3: ["על הגב, ברכיים כפופות", "דוחפים בעקבים ומרימים אגן", "מחזיקים 3 שניות ויורדים לאט"], watch: "לא מקשיתים את הגב למעלה.",
       name: 'גשר ישבן', en: 'Glute bridge', move: 'bridge',
       dose: { sets: 3, reps: 12, hold: 3, relax: 2 }, doseText: '3 × 12, החזקה 3 שנ׳ למעלה',
@@ -166,6 +170,7 @@
       sources: [S.aceBr, S.ccBr, S.mayoBack]
     },
     clam: {
+      video: ['https://www.youtube.com/watch?v=cC1L0KOZjx8', 'NHS South Tees', 'video'],
       goal: "צד הירך ויציבות הברך", s3: ["על הצד, ברכיים כפופות, עקבים צמודים", "פותחים את הברך העליונה", "סוגרים לאט"], watch: "האגן לא מתגלגל לאחור.",
       name: 'צדפה (Clamshell)', en: 'Clamshell', move: 'clam',
       dose: { sets: 3, reps: 15, perSide: true, sideLabels: ['שוכבים על צד ימין', 'שוכבים על צד שמאל'] }, doseText: '3 × 15 לכל צד',
@@ -193,6 +198,7 @@
       sources: [S.wigan, S.mayoStretch, S.rbKnee, S.acsm2011]
     },
     hamstring: {
+      video: ['https://www.youtube.com/watch?v=XOtaFwoYn7w', 'NHS South Tees', 'video'],
       goal: "אחורי הירך", s3: ["על הגב, מגבת סביב כף הרגל", "מיישרים לאט את הברך", "משיכה עדינה, 30 שניות"], watch: "עקצוץ או כאב שיורד לרגל? עוצרים.",
       name: 'מתיחת שרירים אחוריים של הירך', en: 'Supine hamstring stretch with towel', move: 'hamstring',
       dose: { sets: 2, hold: 30, perSide: true, sideLabels: ['רגל ימין', 'רגל שמאל'] }, doseText: '2 × 30 שנ׳ לכל צד',
@@ -206,6 +212,7 @@
       sources: [S.stHam, S.aceHam, S.mayoStretch, S.acsm2011, S.nhsDisc]
     },
     calf: {
+      video: ['https://www.youtube.com/watch?v=A8GwnrsDLi8', 'NHS South Tees', 'video'],
       goal: "שרירי השוק", s3: ["ידיים על הקיר, רגל אחת מאחור", "ברך ישרה, עקב על הרצפה: 30 שניות", "ואז ברך כפופה מעט: 30 שניות"], watch: "העקב לא מתרומם. כאב נקודתי בעצם? עוצרים.",
       name: 'מתיחת שרירי השוק מול קיר', en: 'Wall calf stretch (gastrocnemius & soleus)', move: 'calf',
       dose: { sets: 2, hold: 30, perSide: true, setLabels: ['ברך ישרה', 'ברך כפופה'], setKeys: [0, 1], sideLabels: ['רגל ימין מאחור', 'רגל שמאל מאחור'] }, doseText: '30 שנ׳ לכל גרסה, לכל רגל',
@@ -219,6 +226,7 @@
       sources: [S.rohCalf, S.mayoStretch, S.physioSF]
     },
     catcow: {
+      video: ['https://www.youtube.com/watch?v=jnpFgCkN2LA', 'NHS South Tees', 'video'],
       goal: "תנועתיות הגב", s3: ["עמידת שש", "נשיפה: מעגלים את הגב", "שאיפה: הבטן שוקעת בעדינות"], watch: "בטווח נוח, ולא בשעה הראשונה אחרי הקימה.",
       name: 'חתול-פרה', en: 'Cat-cow', move: 'catcow',
       dose: { sets: 1, reps: 8 }, doseText: '8 חזרות (המקורות: 3–10)',
@@ -232,6 +240,7 @@
       sources: [S.ccCat, S.mayoBack, S.mcgillMorning, S.snook]
     },
     shoulders: {
+      video: ['https://www.southtees.nhs.uk/resources/shoulder-posture/', 'NHS South Tees', 'video'],
       goal: "כתפיים וצוואר", s3: ["עומדים זקוף, ידיים רפויות", "5 גלגולים לאחור ו-5 לפנים", "מקרבים שכמות ומחזיקים 5 שניות"], watch: "אחורה ולמטה, לא לכיוון האוזניים.",
       name: 'גלגולי כתפיים וקירוב שכמות', en: 'Shoulder rolls & scapular squeeze', move: 'shoulders',
       dose: { sets: 1, reps: 15, repsText: '5 לאחור, 5 לפנים, 5 קירובי שכמות' }, doseText: '5 לכל כיוון + 5 קירובים',

@@ -86,7 +86,11 @@
     sh.innerHTML = `<div class="sheet-inner">
       <div class="bar"><button class="iconbtn" data-close aria-label="חזרה">${ICON.back}</button><h1 class="grow">${esc(x.name)}</h1></div>
       <p class="dose">${esc(x.goal)} · <b>${esc(dose ? doseText(d) : x.doseText)}</b></p>
-      <div class="pics">${[0, 1].map(k => `<figure><figcaption class="lbl">${esc(pr.labels[k])}</figcaption><div class="pic" data-k="${k}"></div><p class="say">${esc(pr.says[k] || '')}</p></figure>`).join('<span class="to" aria-hidden="true">←</span>')}</div>
+      ${pr.variant
+        ? `<div class="pics">${[0, 1].map(k => `<figure><figcaption class="lbl">${esc(pr.labels[k])}</figcaption><div class="pic" data-k="${k}"></div><p class="say">${esc(pr.says[k] || '')}</p></figure>`).join('')}</div>`
+        : `<div class="pics"><figure><div class="pic" data-k="1"></div><p class="motion">${esc(Pict.motion(x.move))}</p>
+            <p class="legend"><span><i style="background:var(--hot)"></i>זז</span><span><i style="background:var(--still)"></i>נשאר במקום</span><span><i style="background:var(--still);opacity:.35"></i>מנח התחלה</span></p></figure></div>`}
+      ${x.video ? `<a class="video" href="${esc(x.video[0])}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></svg>${x.video[2] === 'photos' ? 'תמונות של התרגיל' : 'צפו בסרטון'} <small>${esc(x.video[1])} · דורש קליטה</small></a>` : ''}
       <ol class="steps3">${x.s3.map(s => `<li>${esc(s)}</li>`).join('')}</ol>
       <div class="watch"><b>שימו לב:</b> ${esc(x.watch)}<br><span class="stopline">${esc(C.stopLine)}</span></div>
       <div class="timer" id="tm"></div>

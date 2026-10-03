@@ -12,7 +12,7 @@
   --bg:#f6f7f3; --surface:#ffffff; --surface2:#eef1ec; --line:#dfe5dd;
   --fg:#1c2620; --muted:#64706a;
   --accent:#2f6b4f; --on-accent:#ffffff; --accent-soft:#e6f0ea;
-  --ink:#24443a; --ink-far:#b5c6bc; --hot:#e0703a; --band:#d0533e; --floor:#d9e0d8; --prop:#eef2ee;
+  --ink:#24443a; --ink-far:#b5c6bc; --still:#9aaba2; --still-far:#d3ddd7; --hot:#e0703a; --hot-far:#f3b994; --band:#d0533e; --floor:#d9e0d8; --prop:#eef2ee;
   --warn:#94420f; --warn-bg:#fdf1e7; --danger:#b3261e; --danger-bg:#fcebe9;
   --display:Rubik,'Arial Hebrew',system-ui,sans-serif; --body:Assistant,'Arial Hebrew',system-ui,sans-serif;
   --r:18px; --tabh:62px;
@@ -22,7 +22,7 @@
   --bg:#121614; --surface:#1a201c; --surface2:#222a25; --line:#2c3630;
   --fg:#e5ebe6; --muted:#97a59c;
   --accent:#7ccaa0; --on-accent:#0d1711; --accent-soft:#1f3328;
-  --ink:#cfe3d7; --ink-far:#4a5d52; --hot:#ff9a5c; --band:#ff7a63; --floor:#36423b; --prop:#26302a;
+  --ink:#cfe3d7; --ink-far:#4a5d52; --still:#6f8378; --still-far:#3a4741; --hot:#ff9a5c; --hot-far:#9a5a36; --band:#ff7a63; --floor:#36423b; --prop:#26302a;
   --warn:#f3a873; --warn-bg:#2d2119; --danger:#ff8a80; --danger-bg:#341b19;
   color-scheme:dark}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -69,13 +69,19 @@ main{padding:0 16px calc(var(--tabh) + env(safe-area-inset-bottom,0px) + 24px);m
 .p-body path,.p-ghost path{fill:none;stroke-linecap:round;stroke-linejoin:round}
 .p-trunk{stroke:var(--ink);stroke-width:17}
 .p-neck{stroke:var(--ink);stroke-width:8}
-.p-near.leg{stroke:var(--ink);stroke-width:13}
-.p-near.arm{stroke:var(--ink);stroke-width:10}
-.p-far.leg{stroke:var(--ink-far);stroke-width:12}
-.p-far.arm{stroke:var(--ink-far);stroke-width:9}
+.p-leg{stroke:var(--ink);stroke-width:13}
+.p-arm{stroke:var(--ink);stroke-width:10}
+.p-leg.p-far{stroke:var(--ink-far);stroke-width:12}
+.p-arm.p-far{stroke:var(--ink-far);stroke-width:9}
 .p-head{fill:var(--ink)}
-.p-ghost{opacity:.17}
-.p-hl{fill:none;stroke:var(--hot);stroke-width:24;stroke-linecap:round;opacity:.28}
+.p-ghost{opacity:.16}
+/* movement drawing: still parts grey, moving parts orange */
+.p-act path{stroke:var(--still)}
+.p-act .p-far{stroke:var(--still-far)}
+.p-act .p-head{fill:var(--still)}
+.p-act .mv{stroke:var(--hot)}
+.p-act .p-far.mv{stroke:var(--hot-far)}
+.p-act .p-head.mv{fill:var(--hot)}
 .p-arrow{fill:none;stroke:var(--hot);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
 .p-band{fill:none;stroke:var(--band);stroke-width:3}
 .p-prop *{fill:var(--prop);stroke:var(--floor)}
@@ -117,10 +123,15 @@ ul.routine{list-style:none;margin:0;padding:0;display:flex;flex-direction:column
 .iconbtn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .dose{color:var(--muted)}
 .dose b{color:var(--fg);font-weight:700}
-.pics{display:flex;align-items:center;gap:6px}
-.pics figure{flex:1;margin:0;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 8px 10px;display:flex;flex-direction:column;gap:4px;align-self:stretch}
-.pics .say{font-size:.84rem;line-height:1.35;color:var(--muted)}
-.pics .to{color:var(--hot);font-size:1.3rem;flex:none}
+.pics{display:flex;align-items:stretch;gap:8px}
+.pics figure{flex:1;margin:0;min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px 12px;display:flex;flex-direction:column;gap:6px}
+.pics .say{font-size:.86rem;line-height:1.35;color:var(--muted)}
+.motion{font:500 1.05rem var(--display);color:var(--hot);text-align:center}
+.legend{display:flex;justify-content:center;gap:14px;font-size:.8rem;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:6px;border-radius:3px;vertical-align:middle;margin-inline-end:5px}
+.video{display:flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:14px;background:var(--surface2);color:var(--fg);text-decoration:none;font:500 1rem var(--display)}
+.video svg{width:20px;height:20px;fill:var(--hot)}
+.video small{color:var(--muted);font:400 .8rem var(--body)}
 .steps3{margin:0;padding:0;list-style:none;counter-reset:s;display:flex;flex-direction:column;gap:8px}
 .steps3 li{counter-increment:s;display:flex;gap:10px;align-items:baseline;font-size:1.02rem}
 .steps3 li::before{content:counter(s);flex:none;width:26px;height:26px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 .85rem/26px var(--display);text-align:center}
